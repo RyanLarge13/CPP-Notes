@@ -3,11 +3,28 @@
 #include <limits>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 using namespace std;
 namespace fs = std::filesystem;
 
 void initializeAccount() {
-
+    string uername;
+    bool getUsername = true;
+    string password;
+    int pin;
+    cout << "Lets create a new account for you so you can sync your notes and keep your data safe." << endl << endl;
+    cout << "What would you like your new username to be? ";
+    while (getUsername) {
+    cin << username;
+    if (cin.fail()) {
+        cin.clear();
+        cin.ignore(numeric_limits <streamsize>::max(), '\n');
+        cout << "Please enter a valid username" << endl << "This username should be at minimum 4 characters" << endl << "Your new username can only include:" << endl << "- A-Z, a-z, numbers, _, and -" << endl;
+    }
+    if (username.length() < 4) {
+        cout << endl << "Your username must be at minimum 4 charaters long" << endl;
+    }
+    }
 }
 
 void checkForNotesDirectory() {
