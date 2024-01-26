@@ -75,6 +75,9 @@ bool checkForExistingAccount() {
 	}
 	return false;
 }
+void createAccount() {
+	cout << "Let us create you an account." << endl << "Welcome to CPP-Notes" << endl;
+}
 };
 
 #endif

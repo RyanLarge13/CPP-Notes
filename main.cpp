@@ -150,8 +150,11 @@ void checkForAccount() {
 	bool configExist = checkForLocalConfigFile();
 	if (!configExist) {
 		configManager.createConfigFile("config.yaml");
+		configManager.createAccount();
 	}
-	if (configExist) {}
+	if (configExist) {
+		login();
+	}
 }
 
 int main(int argc, char* argv[]) {
