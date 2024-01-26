@@ -94,9 +94,7 @@ void checkForNotesDirectory() {
 
 void createConfigFile(string filename) {
 	ofstream newFile(filename);
-	newFile.close();
-	ifstream file(filename);
-	if (!file.is_open()) {
+	if (!newFile.is_open()) {
 		char answer;
 		cout << endl << "We are having issues initializing a configuration file for your new account. Would you like to create this configuration file manually?" << endl << " (Y/N) Yes/No: ";
 		cin >> answer;
@@ -110,10 +108,14 @@ void createConfigFile(string filename) {
 		}
 		return;
 	}
+	ifstream file(newFile);
+	if (!file.is_open()) {
+		
+	}
 	return;
 }
 
-bool checkForLocalUserAndConfigFile() {
+bool checkForLocalConfigFile() {
 	string filename = "config.yaml";
 	ifstream file(filename);
 	if (!file.is_open()) {
@@ -124,11 +126,11 @@ bool checkForLocalUserAndConfigFile() {
 
 void printMenu() {
 	checkForNotesDirectory();
-	bool configFileExists = checkForLocalUserAndConfigFile();
+	/*	bool configFileExists = checkForLocalUserAndConfigFile();
 	if (!configFileExists) {
 		createConfigFile("config.yaml");
 		initializeAccount();
-	}
+	}*/
 	cout << "*** Welcome to CPP Notes ***" << endl << endl;
 	vector < string > options;
 	options.push_back("1. Create account");
@@ -163,8 +165,15 @@ void printMenu() {
 	}
 }
 
+void checkForAccount() {
+	bool configExist = checkForLocalConfigFile();
+	if (!configExist) {}
+	if (configExist) {}
+}
+
 int main(int argc, char* argv[]) {
 	system("clear");
-	printMenu();
+	checkForAccount();
+	//	printMenu();
 	return 0;
 }
