@@ -29,7 +29,24 @@ class ConfigManager {
   };
   vector < pair < string,
   bool>> createUsername() {};
-  string createPassword() {};
+  string createPassword() {
+    string password;
+    bool getPassword = true;
+    while(getPassword) {
+      cout << "We strongy suggest a secure and strong password that contains upper and lowercase characters, numbers, and special characters" << endl:
+      cout << "New password: ";
+      cin >> password;
+      if (cin.fail()) {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize >:ax());
+        cout << "Please create a valid password" << endl;
+      } else if (password.length < 8) {
+        cout << "Your password must be at least 8 characters in length" << endl;
+      } else {
+        getPasswordConfirm = false;
+      }
+    }
+  };
   int createPin() {};
   public:
   bool checkForLocalConfigFile() {
