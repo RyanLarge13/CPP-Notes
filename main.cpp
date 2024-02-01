@@ -12,7 +12,7 @@ using namespace std;
 namespace fs = std::filesystem;
 
 FileManager fileManager;
-ConfigFileManager configManager;
+ConfigManager configManager;
 
 void checkForAccount() {
 	bool configExist = configManager.checkForLocalConfigFile();
