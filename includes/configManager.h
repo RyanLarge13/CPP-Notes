@@ -8,17 +8,18 @@ using namespace std;
 
 class ConfigManager {
   private:
+
   string createUsername() {
     string username;
     bool getUsername = true;
     while(getUsername) {
       cout << "New username: ";
-      cin << username;
+      cin >> username;
       if (cin.fail()) {
         cin.clear();
         cin.ignore(numeric_limits < streamsize > ::max());
         cout << endl << "Your new username must be valid characters" << endl;
-      } else if (username.length < 3) {
+      } else if (username.length() < 3) {
         cout << endl << "Your username must be at least 3 characters in length"
         << endl;
       } else {
@@ -27,8 +28,21 @@ class ConfigManager {
     }
     return username;
   };
+
   vector < pair < string,
-  bool>> createUsername() {};
+  bool>> createEmail() {
+    string answer;
+    bool getAnswer = true;
+    cout << "You have a choice to add an email to your account or not. This will help with recovering information and storing information on the cloud when using other devices of recovering data" << endl;
+    while(getAnswer) {
+    cout << "Would you like to add an email?  (Y/n)";
+    cin answer;
+    if (cin.fail()) {
+      
+    }
+    } 
+  }
+
   string createPassword() {
     string password;
     bool getPassword = true;
@@ -38,15 +52,16 @@ class ConfigManager {
       cin >> password;
       if (cin.fail()) {
         cin.clear();
-        cin.ignore(numeric_limits < streamsize >: ax());
+        cin.ignore(numeric_limits < streamsize > ::max());
         cout << "Please create a valid password" << endl;
-      } else if (password.length < 8) {
+      } else if (password.length() < 8) {
         cout << "Your password must be at least 8 characters in length" << endl;
       } else {
-        getPasswordConfirm = false;
+        getPassword = false;
       }
     }
   };
+
   int createPin() {
     int pin;
     bool getPin = true;
@@ -55,16 +70,17 @@ class ConfigManager {
       cin >> pin;
       if (cin.fail()) {
         cin.clear();
-        cin.ignore(numeric_limits < streamsize >: max());
+        cin.ignore(numeric_limits < streamsize > ::max());
         cout << "Your new pin must be a 4-digit number" << endl;
       }
-      if (pin > 9999 || pin.length() < 1000) {
+      if (pin > 9999 || pin < 1000) {
         cout << "Your new pin must be a 4-digit number" << endl;
       }
     }
     return pin;
   };
   public:
+
   bool checkForLocalConfigFile() {
     string filename = "config.yaml";
     ifstream file(filename);
