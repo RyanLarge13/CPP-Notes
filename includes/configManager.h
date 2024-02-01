@@ -38,7 +38,7 @@ class ConfigManager {
       cin >> password;
       if (cin.fail()) {
         cin.clear();
-        cin.ignore(numeric_limits<streamsize >:ax());
+        cin.ignore(numeric_limits < streamsize >: ax());
         cout << "Please create a valid password" << endl;
       } else if (password.length < 8) {
         cout << "Your password must be at least 8 characters in length" << endl;
@@ -47,7 +47,23 @@ class ConfigManager {
       }
     }
   };
-  int createPin() {};
+  int createPin() {
+    int pin;
+    bool getPin = true;
+    while(getPin) {
+      cout << "New 4-digit pin: ";
+      cin >> pin;
+      if (cin.fail()) {
+        cin.clear();
+        cin.ignore(numeric_limits < streamsize >: max());
+        cout << "Your new pin must be a 4-digit number" << endl;
+      }
+      if (pin > 9999 || pin.length() < 1000) {
+        cout << "Your new pin must be a 4-digit number" << endl;
+      }
+    }
+    return pin;
+  };
   public:
   bool checkForLocalConfigFile() {
     string filename = "config.yaml";
