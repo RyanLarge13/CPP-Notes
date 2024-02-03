@@ -1,28 +1,31 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <vector>
 using namespace std;
 
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
 class ConfigManager {
-  private:
+private:
 
   string createUsername() {
     string username;
     bool getUsername = true;
-    while(getUsername) {
+    while (getUsername) {
       cout << "New username: ";
       cin >> username;
       if (cin.fail()) {
         cin.clear();
         cin.ignore(numeric_limits < streamsize > ::max());
         cout << endl << "Your new username must be valid characters" << endl;
-      } else if (username.length() < 3) {
+      }
+      else if (username.length() < 3) {
         cout << endl << "Your username must be at least 3 characters in length"
-        << endl;
-      } else {
+          << endl;
+      }
+      else {
         getUsername = false;
       }
     }
@@ -30,33 +33,65 @@ class ConfigManager {
   };
 
   vector < pair < string,
-  bool>> createEmail() {
+    bool>> createEmail() {
     string answer;
+    string email;
+    bool getEmail = true;
     bool getAnswer = true;
+    vector<pair<string, int>> fail = { "no email", false };
     cout << "You have a choice to add an email to your account or not. This will help with recovering information and storing information on the cloud when using other devices of recovering data" << endl;
-    while(getAnswer) {
-    cout << "Would you like to add an email?  (Y/n)";
-    cin answer;
-    if (cin.fail()) {
-      
+    while (getAnswer) {
+      cout << "Would you like to add an email?  (Y/n)";
+      cin >> answer;
+      if (cin.fail()) {
+        getAnswer = false;
+      }
+      if (answer == "y" || answer == "Y" || answer = "yes" || answer == "Yes") {
+        getAnswer = false;
+        break;
+      }
+      else {
+        getAnswer = false;
+        cout << "No problem, you can change this later if you are interested" << endl;
+        return fail
+      }
+      return fail;
     }
-    } 
+    cout << "Okay, sounds good" << endl;
+    while (getEmail) {
+      cout << "New email: ";
+      cin >> email;
+      if (cin.fail()) {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max());
+        getEmail = false;
+        return fail;
+      }
+      if (email.length() < 5) {
+        cout << "Please input a valid email" << endl;
+      }
+      getEmail = false;
+    }
+    cout << endl << "Great!" << endl;
+    return
   }
 
   string createPassword() {
     string password;
     bool getPassword = true;
-    while(getPassword) {
-      cout << "We strongy suggest a secure and strong password that contains upper and lowercase characters, numbers, and special characters" << endl:
+    while (getPassword) {
+      cout << "We strongly suggest a secure and strong password that contains upper and lowercase characters, numbers, and special characters" << endl:
       cout << "New password: ";
       cin >> password;
       if (cin.fail()) {
         cin.clear();
         cin.ignore(numeric_limits < streamsize > ::max());
         cout << "Please create a valid password" << endl;
-      } else if (password.length() < 8) {
+      }
+      else if (password.length() < 8) {
         cout << "Your password must be at least 8 characters in length" << endl;
-      } else {
+      }
+      else {
         getPassword = false;
       }
     }
@@ -65,7 +100,7 @@ class ConfigManager {
   int createPin() {
     int pin;
     bool getPin = true;
-    while(getPin) {
+    while (getPin) {
       cout << "New 4-digit pin: ";
       cin >> pin;
       if (cin.fail()) {
@@ -79,7 +114,7 @@ class ConfigManager {
     }
     return pin;
   };
-  public:
+public:
 
   bool checkForLocalConfigFile() {
     string filename = "config.yaml";
@@ -135,10 +170,10 @@ class ConfigManager {
     getline(file, line);
     stringstream ss(line);
     vector < string > rows;
-    while(getline(ss, value, '\n')) {
+    while (getline(ss, value, '\n')) {
       rows.push_back(value);
     }
-    for (const string& row: rows) {
+    for (const string& row : rows) {
       cout << row << endl;
     }
     if (rows.size() < 1) {
@@ -152,7 +187,7 @@ class ConfigManager {
     cout << endl << "First we need to create a new username, email, password and a new pin incase you want to lock your notes" << endl;
     string newName = createUsername();
     vector < pair < string,
-    bool>> newEmail = createEmail();
+      bool>> newEmail = createEmail();
     string newPassword = createPassword();
     int newPin = createPin();
   }
