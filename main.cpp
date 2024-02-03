@@ -14,6 +14,11 @@ namespace fs = std::filesystem;
 FileManager fileManager;
 ConfigManager configManager;
 
+void printMenu() {
+	vector <string> userInfo = configManager.getUserInfo();
+	cout << "Welcome " << userInfo[0] << endl;
+}
+
 void checkForAccount() {
 	bool configExist = configManager.checkForLocalConfigFile();
 	if (!configExist) {
@@ -22,7 +27,12 @@ void checkForAccount() {
 	}
 	if (configExist) {
 		bool accountEstablished = configManager.checkForExistingAccount();
-		//Check if user data in config
+		if (accountEstablished) {
+			printMenu();
+		}
+		else {
+			configManager.createAccount();
+		}
 	}
 }
 

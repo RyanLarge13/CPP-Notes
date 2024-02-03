@@ -121,7 +121,7 @@ private:
     return pin;
   };
 
-  void initializeConfig(string username, string email, string password, int pin) {
+  bool initializeConfig(string username, string email, string password, int pin) {
     ofstream conifigFile("config.yaml");
     if (!conifigFile.is_open()) {
       char answer;
@@ -130,20 +130,36 @@ private:
       if (cin.fail()) {
         cin.clear();
         cin.ignore(numeric_limits < streamsize > ::max());
-        return;
+        return false;
       }
       if (answer == 'Y' || answer == 'y') {
         cout << endl << "Steps to take: " << endl << "1. End this program and within your current directory type in \"touch config.yaml\" " << endl << "2. Run a command to make sure that you have read write and execution access within the directory \"chmod 777 config.yaml\"" << endl << "3. You are all set. Restart the application and try again";
-        return;
+        return false;
       }
     }
-    conifigFile << "username: " << username << endl;
-    conifigFile << "email: " << email << endl;
-    conifigFile << "password: " << password << endl;
-    conifigFile << "pin: " << pin << endl;
+    conifigFile << "username: " << username << "\n";
+    conifigFile << "email: " << email << "\n";
+    conifigFile << "password: " << password << "\n";
+    conifigFile << "pin: " << pin << "\n";
+    return true;
   }
 
 public:
+
+  vector <string> getUserInfo() {
+    ifstream file("config.yaml");
+    string line;
+    string value;
+    vector < string > rows;
+    while (getline(file, value)) {
+      rows.push_back(value);
+    }
+    if (!file.eof()) {
+      cout << "There was a problem reading your configuration file" << endl << "Would you like to attempt creating a new configuration or fix the issue manually?";
+    }
+    file.close();
+    return rows;
+  }
 
   bool checkForLocalConfigFile() {
     string filename = "config.yaml";
@@ -196,19 +212,38 @@ public:
     }
     string line;
     string value;
-    getline(file, line);
-    stringstream ss(line);
     vector < string > rows;
-    while (getline(ss, value, '\n')) {
+    while (getline(file, value)) {
       rows.push_back(value);
     }
-    for (const string& row : rows) {
-      cout << row << endl;
-    }
-    if (rows.size() < 1) {
+    if (!file.eof()) {
+      cout << "There was a problem reading your configuration file" << endl << "Would you like to attempt creating a new configuration or fix the issue manually?";
       return false;
     }
-    return false;
+    file.close();
+    if (rows.size() < 4) {
+      string answer;
+      bool getAnswer = true;
+      cout << "It seems as though you have started creating an account but never finished the process. Would you like to continue?" << endl;
+      while (getAnswer) {
+        cin >> answer;
+        if (cin.fail()) {
+          cin.clear();
+          cin.ignore(numeric_limits<streamsize>::max());
+          cout << "Please input a valid answer" << endl;
+        }
+        if (answer == "y" || answer == "Y") {
+          finishCreatingAccount(rows);
+          getAnswer = false;
+          return true;
+        }
+        else {
+          getAnswer = false;
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   void createAccount() {
@@ -218,8 +253,45 @@ public:
     string newEmail = createEmail();
     string newPassword = createPassword();
     int newPin = createPin();
-    initializeConfig(newName, newEmail, newPassword, newPin);
+    bool configInitialized = initializeConfig(newName, newEmail, newPassword, newPin);
+    if (configInitialized) {
+      cout << "We officially created a new account for you. More configuration can be done within your settings. Happy notes taking!!!" << endl;
+    }
+    else {
+      cout << endl << "Steps to take: " << endl << "1. End this program and within your current directory type in \"touch config.yaml\" " << endl << "2. Run a command to make sure that you have read write and execution access within the directory \"chmod 777\"" << endl << "3. You are all set. Restart the application and try again";
+    }
   }
+
+  void finishCreatingAccount(vector<string> accountInfo) {
+    size_t length = accountInfo.size();
+    if (length < 1) {
+      createAccount();
+      return;
+    }
+    if (length < 2) {
+      cout << "Your current username is " << accountInfo[0] << ". Would you like to change it?";
+      createEmail();
+    }
+    if (length < 3) {
+      if (accountInfo[1] == "no email") {
+        cout << "Your current username " << accountInfo[0] << " and you currently do not have an email. Would you like to change your username or email?";
+      }
+      else {
+        cout << "Your current username " << accountInfo[0] << ", and your current email is " << accountInfo[1];
+      }
+      createPassword();
+    }
+    if (length < 4) {
+      if (accountInfo[1] == "no email") {
+        cout << "Your current username is " << accountInfo[0] << ", you do not have an email set, and your current password has been successfully set" << endl << "Would you like to change any of these values?";
+      }
+      else {
+        cout << "Your current username is " << accountInfo[0] << ", your current email is " << accountInfo[1] << " and your current password has been successfully set" << endl << "Would you like to change any of these values?";
+      }
+      createPin();
+    }
+  }
+
 };
 
 #endif
