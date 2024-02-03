@@ -32,13 +32,11 @@ private:
     return username;
   };
 
-  vector < pair < string,
-    bool>> createEmail() {
+  string createEmail() {
     string answer;
     string email;
     bool getEmail = true;
     bool getAnswer = true;
-    vector<pair<string, int>> fail = { "no email", false };
     cout << "You have a choice to add an email to your account or not. This will help with recovering information and storing information on the cloud when using other devices of recovering data" << endl;
     while (getAnswer) {
       cout << "Would you like to add an email?  (Y/n)";
@@ -46,16 +44,16 @@ private:
       if (cin.fail()) {
         getAnswer = false;
       }
-      if (answer == "y" || answer == "Y" || answer = "yes" || answer == "Yes") {
+      if (answer == "y" || answer == "Y" || answer == "yes" || answer == "Yes") {
         getAnswer = false;
         break;
       }
       else {
         getAnswer = false;
         cout << "No problem, you can change this later if you are interested" << endl;
-        return fail
+        return "no email";
       }
-      return fail;
+      return "no email";
     }
     cout << "Okay, sounds good" << endl;
     while (getEmail) {
@@ -65,22 +63,24 @@ private:
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max());
         getEmail = false;
-        return fail;
+        return "no email";
       }
       if (email.length() < 5) {
         cout << "Please input a valid email" << endl;
       }
-      getEmail = false;
+      else {
+        getEmail = false;
+      }
     }
     cout << endl << "Great!" << endl;
-    return
+    return email;
   }
 
   string createPassword() {
     string password;
     bool getPassword = true;
     while (getPassword) {
-      cout << "We strongly suggest a secure and strong password that contains upper and lowercase characters, numbers, and special characters" << endl:
+      cout << "We strongly suggest a secure and strong password that contains upper and lowercase characters, numbers, and special characters" << endl;
       cout << "New password: ";
       cin >> password;
       if (cin.fail()) {
@@ -93,8 +93,10 @@ private:
       }
       else {
         getPassword = false;
+        return password;
       }
     }
+    return password;
   };
 
   int createPin() {
@@ -111,9 +113,36 @@ private:
       if (pin > 9999 || pin < 1000) {
         cout << "Your new pin must be a 4-digit number" << endl;
       }
+      else {
+        getPin = false;
+        return pin;
+      }
     }
     return pin;
   };
+
+  void initializeConfig(string username, string email, string password, int pin) {
+    ofstream conifigFile("config.yaml");
+    if (!conifigFile.is_open()) {
+      char answer;
+      cout << endl << "We are having issues initializing a configuration file for your new account. Would you like to create this configuration file manually?" << endl << " (Y/N) Yes/No: ";
+      cin >> answer;
+      if (cin.fail()) {
+        cin.clear();
+        cin.ignore(numeric_limits < streamsize > ::max());
+        return;
+      }
+      if (answer == 'Y' || answer == 'y') {
+        cout << endl << "Steps to take: " << endl << "1. End this program and within your current directory type in \"touch config.yaml\" " << endl << "2. Run a command to make sure that you have read write and execution access within the directory \"chmod 777 config.yaml\"" << endl << "3. You are all set. Restart the application and try again";
+        return;
+      }
+    }
+    conifigFile << "username: " << username << endl;
+    conifigFile << "email: " << email << endl;
+    conifigFile << "password: " << password << endl;
+    conifigFile << "pin: " << pin << endl;
+  }
+
 public:
 
   bool checkForLocalConfigFile() {
@@ -186,10 +215,10 @@ public:
     cout << "Let create an account" << endl << "Welcome to CPP-Notes" << endl;
     cout << endl << "First we need to create a new username, email, password and a new pin incase you want to lock your notes" << endl;
     string newName = createUsername();
-    vector < pair < string,
-      bool>> newEmail = createEmail();
+    string newEmail = createEmail();
     string newPassword = createPassword();
     int newPin = createPin();
+    initializeConfig(newName, newEmail, newPassword, newPin);
   }
 };
 
