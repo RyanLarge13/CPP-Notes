@@ -148,11 +148,20 @@ public:
 
   vector <string> getUserInfo() {
     ifstream file("config.yaml");
+    // if (!file.is_open()) {
+
+    // }
     string line;
     string value;
     vector < string > rows;
     while (getline(file, value)) {
-      rows.push_back(value);
+      size_t colonPosition = value.find(":");
+      if (colonPosition != string::npos) {
+        string lineValue = value.substr(colonPosition + 1);
+        lineValue.erase(0, lineValue.find_first_not_of(" \t\n\r\f\v"));
+        lineValue.erase(lineValue.find_last_not_of(" \t\n\r\f\v"));
+        rows.push_back(lineValue);
+      }
     }
     if (!file.eof()) {
       cout << "There was a problem reading your configuration file" << endl << "Would you like to attempt creating a new configuration or fix the issue manually?";
