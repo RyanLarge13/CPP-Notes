@@ -158,8 +158,8 @@ public:
       size_t colonPosition = value.find(":");
       if (colonPosition != string::npos) {
         string lineValue = value.substr(colonPosition + 1);
-        lineValue.erase(0, lineValue.find_first_not_of(" \t\n\r\f\v"));
-        lineValue.erase(lineValue.find_last_not_of(" \t\n\r\f\v"));
+        lineValue.erase(0, lineValue.find_first_of(" \n"));
+        lineValue.erase(lineValue.find_last_of(" \n"));
         rows.push_back(lineValue);
       }
     }

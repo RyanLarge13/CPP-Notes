@@ -14,9 +14,25 @@ namespace fs = std::filesystem;
 FileManager fileManager;
 ConfigManager configManager;
 
+const vector <pair<int, string>> {
+	{
+		1, "1. New Note"
+	}, {
+		2, "2. New Folder",
+	}, {
+		3, "3. Settings"
+	}, {
+		4, "4. Logout"
+	}, {
+		5. "5. Delete Account"
+	}
+}
+
 void printMenu() {
 	vector <string> userInfo = configManager.getUserInfo();
 	cout << "Welcome " << userInfo[0] << endl;
+	cout << "**************" << end;
+
 }
 
 void checkForAccount() {
