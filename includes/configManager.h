@@ -300,7 +300,9 @@ public:
       createPin();
     }
   }
-
+ deleteAccount() {
+  // remove config file
+ }
 };
 
 #endif
