@@ -8,6 +8,7 @@
 #include "../includes/configManager.h"
 #include "../includes/httpHandler.h"
 #include "../includes/stateManager.h"
+#include "../includes/exceptionHandler.h"
 
 using namespace std;
 namespace fs = filesystem;
@@ -15,6 +16,7 @@ namespace fs = filesystem;
 FileManager fileManager;
 ConfigManager configManager;
 StateManager stateManager;
+ExceptionHandler exceptionHandler;
 
 void printMenu();
 vector < string > userInfo;
@@ -61,7 +63,10 @@ void changeState(int option) {
                 cout << endl << "Deleting" << endl;
                 configManager.deleteAccount();
                 system("clear");
-                configManager.createAccount();
+                // Choose later if I want the user experience to be to
+                // immediately recreate an account or exit the program
+                // configManager.createAccount();
+                return;
                 select = false;
             }
             if (selection == 1) {
@@ -71,7 +76,6 @@ void changeState(int option) {
             }
         }
     }
-    // else if (option == 10) {}
     else {
         cout << "Please select a valid option" << endl;
         printMenu();
@@ -112,14 +116,17 @@ void printMenu() {
 }
 
 void checkForAccount() {
-    bool configExist = configManager.checkForLocalConfigFile();
-    if (!configExist) {
-        configManager.createConfigFile("config.yaml");
-        configManager.createAccount();
+    ifstream* config = configManager.checkForLocalConfigFile("config.yaml");
+    if (!config) {
+        ofstream* newConfig = configManager.createConfigFile("config.yaml");
+        if (!newConfig) {
+            return;
+        }
+        configManager.createAccount(newConfig);
         checkForAccount();
     }
-    if (configExist) {
-        int accountEstablished = configManager.checkForExistingAccount();
+    if (config) {
+        int accountEstablished = configManager.checkForExistingAccount(config);
         if (accountEstablished == 1) {
             return;
         }
@@ -127,7 +134,7 @@ void checkForAccount() {
             printMenu();
         }
         else {
-            configManager.createAccount();
+            // configManager.createAccount();
         }
     }
 }
