@@ -2,6 +2,7 @@
 #include <limits>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 using namespace std;
 
 #ifndef CONFIGMANAGER_H
@@ -9,6 +10,42 @@ using namespace std;
 
 class ConfigManager {
 private:
+
+  string eraseWhiteSpace(string value) {
+    value.erase(value.begin(), find_if(value.begin(), value.end(), [](int ch) {
+      return !isspace(ch);
+      }));
+    value.erase(find_if(value.rbegin(), value.rend(), [](int ch) {
+      return !isspace(ch);
+      }).base(), value.end());
+    return value;
+  }
+
+  void logginFirst() {
+    system("clear");
+    int pin;
+    bool input = true;
+    cout << "You are logged out" << endl;
+    cout << "Login with your pin: ";
+    while (input) {
+      cin >> pin;
+      if (cin.fail()) {
+        cin.clear();
+        cin.ignore(numeric_limits <streamsize> ::max());
+        cout << "Please input your 4 digit numeric pin" << endl;
+        cout << "Login with your pin: ";
+      }
+      vector <string> rows = getUserInfo();
+      if (stoi(rows[3]) == pin) {
+        system("clear");
+        input = false;
+      }
+      else {
+        cout << endl << "Incorrect pin. Please try again" << endl;
+        cout << "Login with your pin: ";
+      }
+    }
+  }
 
   string createUsername() {
     string username;
@@ -122,6 +159,10 @@ private:
   };
 
   bool initializeConfig(string username, string email, string password, int pin) {
+    if (username.size() < 1 || email.size() < 1 || password.size() < 1 || pin < 1000) {
+      cout << "You must complete the registration process before creating a new account" << endl;
+      return false;
+    }
     ofstream conifigFile("config.yaml");
     if (!conifigFile.is_open()) {
       char answer;
@@ -137,6 +178,7 @@ private:
         return false;
       }
     }
+    conifigFile << "logged_in: " << "true" << "\n";
     conifigFile << "username: " << username << "\n";
     conifigFile << "email: " << email << "\n";
     conifigFile << "password: " << password << "\n";
@@ -148,9 +190,10 @@ public:
 
   vector <string> getUserInfo() {
     ifstream file("config.yaml");
-    // if (!file.is_open()) {
-
-    // }
+    if (!file.is_open()) {
+      cout << "could not open file" << endl;
+      return {};
+    }
     string line;
     string value;
     vector < string > rows;
@@ -158,12 +201,11 @@ public:
       size_t colonPosition = value.find(":");
       if (colonPosition != string::npos) {
         string lineValue = value.substr(colonPosition + 1);
-        lineValue.erase(0, lineValue.find_first_of(" \n"));
-        lineValue.erase(lineValue.find_last_of(" \n"));
-        rows.push_back(lineValue);
+        string formattedLineValue = eraseWhiteSpace(lineValue);
+        rows.push_back(formattedLineValue);
       }
     }
-    if (!file.eof()) {
+    if (file.fail() && !file.eof()) {
       cout << "There was a problem reading your configuration file" << endl << "Would you like to attempt creating a new configuration or fix the issue manually?";
     }
     file.close();
@@ -198,7 +240,7 @@ public:
     return;
   }
 
-  bool checkForExistingAccount() {
+  int checkForExistingAccount() {
     ifstream file("config.yaml");
     bool confirmed = false;
     if (!file.is_open()) {
@@ -210,27 +252,22 @@ public:
           cin.clear();
           cin.ignore(numeric_limits < streamsize > ::max(), '\n');
           confirmed = true;
-          return false;
+          return 1;
         }
         if (confirmation != "Y" || confirmation != "y") {
           cout << endl << "Steps to take: " << endl << "1. End this program and within your current directory type in \"touch config.yaml\" " << endl << "2. Run a command to make sure that you have read write and execution access within the directory \"chmod 777\"" << endl << "3. You are all set. Restart the application and try again";
           confirmed = true;
-          return false;
+          return 1;
         }
       }
     }
-    string line;
-    string value;
-    vector < string > rows;
-    while (getline(file, value)) {
-      rows.push_back(value);
-    }
-    if (!file.eof()) {
-      cout << "There was a problem reading your configuration file" << endl << "Would you like to attempt creating a new configuration or fix the issue manually?";
-      return false;
+    vector < string > rows = getUserInfo();
+    if (file.fail() && !file.eof()) {
+      cout << "There was a problem reading your configuration file" << endl << "Would you like to attempt creating a new configuration or fix the issue manually?" << endl;
+      return 1;
     }
     file.close();
-    if (rows.size() < 4) {
+    if (rows.size() < 5) {
       string answer;
       bool getAnswer = true;
       cout << "It seems as though you have started creating an account but never finished the process. Would you like to continue?" << endl;
@@ -248,11 +285,21 @@ public:
         }
         else {
           getAnswer = false;
-          return false;
+          return 2;
         }
       }
     }
-    return true;
+    if (rows.size() == 5) {
+      string loggedInLine = rows[0];
+      if (loggedInLine == "true") {
+        return 0;
+      }
+      if (loggedInLine == "false") {
+        logginFirst();
+        return 0;
+      }
+    }
+    return 1;
   }
 
   void createAccount() {
@@ -300,9 +347,15 @@ public:
       createPin();
     }
   }
- deleteAccount() {
-  // remove config file
- }
+
+  void logout() {
+
+  }
+
+  void deleteAccount() {
+    remove("config.yaml");
+    return;
+  }
 };
 
 #endif
