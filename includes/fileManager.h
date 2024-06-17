@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#include "../common/exceptionHandlerInstance.h"
 using namespace std;
 using namespace filesystem;
 
@@ -10,90 +11,82 @@ using namespace filesystem;
 #define FILEMANAGER_H
 
 class FileManager {
-private:
-    void determineDir() {}
-public:
+ private:
+ public:
 
-    void closeFile(fstream* file) {
-        file->close();
-    }
+ void closeFile(fstream* file) {
+  file->close();
+ }
 
-    ifstream* checkExistingFile(const string& fileName) {
-        ifstream* file = new ifstream(fileName);
-        if (!file->is_open()) {
-            delete file;
-            return nullptr;
-        }
-        return file;
-    }
+ ifstream* checkExistingFile(const string& fileName) {
+  ifstream* file = new ifstream(fileName);
+  if (!file->is_open()) {
+   delete file;
+   return nullptr;
+  }
+  return file;
+ }
 
-    fstream* openFileReadWrite(const string& fileName) {
-        fstream* file = new fstream(fileName);
-        if (!file->is_open()) {
-            cout << "Could not open file: " << fileName << endl;
-            delete file;
-            return nullptr;
-        }
-        return file;
-    }
+ fstream* openFileReadWrite(const string& fileName) {
+  fstream* file = new fstream(fileName);
+  if (!file->is_open()) {
+   delete file;
+   return nullptr;
+  }
+  return file;
+ }
 
-    ofstream* writeFile(const vector<string>& rows, ofstream* file) {
-        if (!file || !file->is_open()) {
-            cout << "No file to write to" << endl;
-            delete file;
-            return nullptr;
-        }
-        for (const string& row : rows) {
-            *file << row << "\n";
-        }
-        return file;
-    }
+ ofstream* writeFile(const vector < string>& rows, ofstream* file) {
+  if (!file || !file->is_open()) {
+   delete file;
+   return nullptr;
+  }
+  for (const string& row: rows) {
+   *file << row << "\n";
+  }
+  return file;
+ }
 
-    ofstream* createNewFile(const string& fileName) {
-        ofstream* newFile = new ofstream(fileName);
-        if (!newFile->is_open()) {
-            cout << "Could not create file" << endl;
-            delete newFile;
-            return nullptr;
-        }
-        return newFile;
-    }
+ ofstream* createNewFile(const string& fileName) {
+  ofstream* newFile = new ofstream(fileName);
+  if (!newFile->is_open()) {
+   delete newFile;
+   return nullptr;
+  }
+  return newFile;
+ }
 
-    void createNewDir(const string& path) {
-        try {
-            if (create_directory(path)) {
-                return;
-            }
-            else {
-                cout << "This directory already exists, please choose a different name or create this directory in a different directory" << endl;
-                return;
-            }
-        }
-        catch (filesystem_error& err) {
-            cout << "There was a problem creating your new directory. Please try again" << endl;
-            return;
-        }
-    }
+ bool createNewDir(const string& path) {
+  try {
+   if (create_directory(path)) {
+    return true;
+   }
+   else {
+    return false;
+   }
+  }
+  catch (filesystem_error& err) {
+   return false;
+  }
+ }
 
-    bool deleteFile(const string& fileName) {
-        if (fileName.empty()) {
-            cout << "Please provide a file name to delete" << endl;
-            return false;
-        }
-        else {
-            if (remove(fileName.c_str()) != 0) {
-                cout << "Error deleting file" << endl;
-                return false;
-            }
-            else {
-                return true;
-            }
-        }
-    }
+ bool deleteFile(const string& fileName) {
+  if (fileName.empty()) {
+   return false;
+  }
+  else {
+   if (remove(fileName.c_str()) != 0) {
+    return false;
+   }
+   else {
+    return true;
+   }
+  }
+ }
 
-    void updateFileWeb() {}
-    void deleteFileWeb() {}
-    void createFileWeb() {}
+ void updateFileWeb() {}
+ void deleteFileWeb() {}
+ void createFileWeb() {}
 };
 
 #endif

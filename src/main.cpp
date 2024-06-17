@@ -31,7 +31,7 @@ const vector < string > options = {
  "5. Delete Account"
 };
 
-void changeState(int option) {
+void selectAction(int option) {
  if (option == 1) {
   system("clear");
   // fileManager.createNewFile("New Note", ".txt");
@@ -93,7 +93,7 @@ void printMenu() {
   system("clear");
   printMenu();
  }
- changeState(selection);
+ selectAction(selection);
 }
 
 void checkForAccount() {

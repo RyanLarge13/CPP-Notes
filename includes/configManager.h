@@ -5,7 +5,7 @@
 #include <algorithm>
 #include "../common/ioHandlerInstance.h"
 #include "../common/fileManagerInstance.h"
-#include "../common/exceptionHandlerIntance.h"
+#include "../common/exceptionHandlerInstance.h"
 using namespace std;
 
 #ifndef CONFIGMANAGER_H
