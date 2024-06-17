@@ -33,6 +33,9 @@ public:
             cout << instruction << endl;
         }
     }
+    void printPlainError(const string& error) {
+        cout << error << endl;
+    }
 };
 
 #endif

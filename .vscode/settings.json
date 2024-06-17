@@ -4,5 +4,6 @@
     "ostream": "cpp",
     "sstream": "cpp",
     "iostream": "cpp"
-  }
+  },
+  "cSpell.words": ["CONFIGMANAGER"]
 }

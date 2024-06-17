@@ -3,8 +3,8 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-#include "./fileManager.h"
-#include "./exceptionHandler.h"
+#include "../common/fileManagerInstance.h"
+#include "../common/exceptionHandlerIntance.h"
 using namespace std;
 
 #ifndef CONFIGMANAGER_H
@@ -25,26 +25,27 @@ private:
         return value;
     }
 
-    void changeLogin(string state) {
+    bool changeLogin(string state) {
         vector < string > rows = getUserInfo(true);
         if (rows.empty()) {
             cout << "No rows returned" << endl;
-            return;
+            return false;
         }
-        ofstream file("config.yaml");
-        if (!file.is_open()) {
-            cout << "We could not open your configuration file. Please try again" <<
-                endl;
-            return;
+        fstream* file = fileManager.openFileReadWrite("config.yaml");
+        if (!file) {
+            cout << "We could not log you in. Please try again" << endl;
+            return false;
         }
         rows[0] = "logged_in: " + state;
         for (const string& row : rows) {
-            file << row << "\n";
+            *file << row << "\n";
         }
-        file.close();
+        file->close();
+        delete file;
+        return true;
     }
 
-    void logginFirst() {
+    bool login() {
         system("clear");
         int pin;
         bool input = true;
@@ -61,14 +62,22 @@ private:
             vector < string > rows = getUserInfo(false);
             if (stoi(rows[4]) == pin) {
                 system("clear");
-                changeLogin("true");
-                input = false;
+                bool loginSuccess = changeLogin("true");
+                if (loginSuccess) {
+                    input = false;
+                    return true;
+                }
+                else {
+                    cout << "There was a problem logging you in. Please try again" << endl;
+                    return false;
+                }
             }
             else {
                 cout << endl << "Incorrect pin. Please try again" << endl;
                 cout << "Login with your pin: ";
             }
         }
+        return false;
     }
 
     string createUsername() {
@@ -198,15 +207,11 @@ private:
 public:
 
     vector < string > getUserInfo(bool rawData) {
-        ifstream file("config.yaml");
-        if (!file.is_open()) {
-            cout << "could not open file" << endl;
-            return {};
-        }
+        fstream* file = fileManager.openFileReadWrite("config.yaml");
         string line;
         string value;
         vector < string > rows;
-        while (getline(file, value)) {
+        while (getline(*file, value)) {
             if (rawData) {
                 rows.push_back(value);
             }
@@ -219,10 +224,18 @@ public:
                 }
             }
         }
-        if (file.fail() && !file.eof()) {
-            cout << "There was a problem reading your configuration file" << endl << "Would you like to attempt creating a new configuration or fix the issue manually? (Y/n) ";
+        if (file->fail() && !file->eof()) {
+            exceptionHandler.printInstructions(
+                {
+                    {"Please reload the application and try again. We encountered an issue reading your configuration file."},
+                    {"1. Try deleting your configuration and re-running the program"},
+                    {"2. Make sure you have permissions set correctly to your file"}
+                }
+            );
+            return {};
         }
-        file.close();
+        file->close();
+        delete file;
         return rows;
     }
 
@@ -258,30 +271,19 @@ public:
         return newConfig;
     }
 
-    int checkForExistingAccount(ifstream* file) {
+    int checkForExistingAccount() {
         bool confirmed = false;
         vector < string > rows = getUserInfo(false);
+        if (rows.size() == 0) {
+            return 1;
+        }
         if (rows.size() < 5) {
-            string answer;
-            bool getAnswer = true;
-            cout << "It seems as though you have started creating an account but never finished the process. Would you like to continue? (Y/n)" << endl;
-            while (getAnswer) {
-                cin >> answer;
-                if (cin.fail()) {
-                    cin.clear();
-                    cin.ignore(numeric_limits < streamsize > ::max());
-                    cout << "Please input a valid answer" << endl;
-                }
-                if (answer == "y" || answer == "Y") {
-                    finishCreatingAccount(rows);
-                    getAnswer = false;
-                    return 0;
-                }
-                else {
-                    getAnswer = false;
-                    return 1;
-                }
-            }
+            exceptionHandler.handleError(
+                {
+                    {"it looks like you have started creating an account but never finished."}
+                },
+                "Would you like to continue where you left off? (Y/n)"
+            );
         }
         if (rows.size() == 5) {
             string loggedInLine = rows[0];
@@ -289,8 +291,13 @@ public:
                 return 0;
             }
             if (loggedInLine == "false") {
-                logginFirst();
-                return 0;
+                bool loginSuccess = login();
+                if (loginSuccess) {
+                    return 0;
+                }
+                else {
+                    return 1;
+                }
             }
         }
         return 1;

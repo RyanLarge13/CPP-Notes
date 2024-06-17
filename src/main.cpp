@@ -102,11 +102,11 @@ void printMenu() {
             if (tries == 3) {
                 return;
             }
-            cout << "Please select a valid option from the menu. If you are trying to exit the program type 10" << endl;
+            exceptionHandler.printPlainError("Please select a valid option from the menu. If you are trying to exit the program type C^+c or logout with 4");
             tries++;
         }
         else if (selection < 1 || selection > 5) {
-            cout << "Please select an available option from the menu. You can create options in your settings" << endl;
+            exceptionHandler.printPlainError("Please select an available option from the menu. Or you can create a new option in your settings");
         }
         else {
             getOption = false;
@@ -123,18 +123,17 @@ void checkForAccount() {
             return;
         }
         configManager.createAccount(newConfig);
+        delete newConfig;
         checkForAccount();
     }
     if (config) {
-        int accountEstablished = configManager.checkForExistingAccount(config);
+        int accountEstablished = configManager.checkForExistingAccount();
         if (accountEstablished == 1) {
             return;
         }
         if (accountEstablished == 0) {
             printMenu();
-        }
-        else {
-            // configManager.createAccount();
+            delete config;
         }
     }
 }
