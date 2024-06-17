@@ -28,7 +28,8 @@ const vector < string > options = {
  "2. New Folder",
  "3. Settings",
  "4. Logout",
- "5. Delete Account"
+ "5. Quit (stay logged in)",
+ "6. Delete Account"
 };
 
 void selectAction(int option) {
@@ -44,10 +45,15 @@ void selectAction(int option) {
   return;
  }
  else if (option == 4) {
+  system("clear");
   configManager.logout();
   return;
  }
  else if (option == 5) {
+  system("clear");
+  return;
+ }
+ else if (option == 6) {
   system("clear");
   string userInput = ioHandler.getInput < string > (
    {
@@ -88,7 +94,7 @@ void printMenu() {
  int selection = ioHandler.getInput < int > ({{
   ""
  }}, "Option: ", "Please select a number as an option");
- if (selection < 1 || selection > 5) {
+ if (selection < 1 || selection > 6) {
   exceptionHandler.printPlainError("Please select an available option from the menu. Or you can create a new option in your settings");
   system("clear");
   printMenu();

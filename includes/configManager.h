@@ -43,7 +43,6 @@ class ConfigManager {
  }
 
  bool login() {
-  system("clear");
   int pin = ioHandler.getInput < int > ({{
    "You are logged out"
   }}, "Login with your pin: ", "Your pin will be a 4 digit number");
@@ -94,10 +93,10 @@ class ConfigManager {
  string createPassword() {
   string password = ioHandler.getInput < string > ({
    {
-    "We strongly suggest a secure and strong password that containing :"
+    "We strongly suggest a secure and strong password containing :"
    },
    {
-    "- 8 characters long *"
+    "- At least 8 characters *"
    },
    {
     "- upper and lowercase characters"
@@ -106,9 +105,9 @@ class ConfigManager {
     "- numbers"
    },
    {
-    "- and special characters"
+    "- and special characters\n"
    }
-  }, "New Password", "Please create a valid password");
+  }, "New Password: ", "Please create a valid password");
   if (password.length() < 8) {
    exceptionHandler.printPlainError("Your password must be at least 8 characters in length");
    return createPassword();
@@ -123,7 +122,7 @@ class ConfigManager {
   if (pin > 9999 || pin < 1000) {
    cout << "Your new pin must be a 4-digit number" << endl;
    return createPin();
-  } 
+  }
   return pin;
  };
 
@@ -247,6 +246,7 @@ class ConfigManager {
     return 0;
    }
    if (loggedInLine == "false") {
+    system("clear");
     bool loginSuccess = login();
     if (loginSuccess) {
      return 0;
@@ -268,7 +268,8 @@ class ConfigManager {
   int newPin = createPin();
   bool configInitialized = initializeConfig(newName, newEmail, newPassword, newPin, configFile);
   if (configInitialized) {
-   cout << "We officially created a new account for you. More configuration can be done within your settings. Happy notes taking!!!" << endl;
+   system("clear");
+   cout << "\nWe officially created a new account for you. More configuration can be done within your settings. Happy notes taking!!!\n" << endl;
    return;
   }
   if (!configInitialized) {
