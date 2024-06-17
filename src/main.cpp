@@ -100,6 +100,7 @@ void printMenu() {
             cin.clear();
             cin.ignore(numeric_limits < streamsize > ::max());
             if (tries == 3) {
+             getOption = false;
                 return;
             }
             exceptionHandler.printPlainError("Please select a valid option from the menu. If you are trying to exit the program type C^+c or logout with 4");
