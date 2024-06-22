@@ -1,5 +1,6 @@
 #include <iostream>
-#include <cstdio> // for remove
+#include <cstdio>
+#include <unistd.h>
 #include <string>
 #include <vector>
 #include <filesystem>
@@ -16,6 +17,23 @@ class FileManager {
 
  void closeFile(fstream* file) {
   file->close();
+ }
+
+ bool checkDirExists(const string& dirPath) {
+  if (exists(dirPath)) {
+   return true;
+  }
+  return false;
+ }
+
+ bool navigateDir(const string& dirPath) {
+  if (!checkDirExists(dirPath)) {
+   return false;
+  }
+  if (!chdir(dirPath.c_str())) {
+   return false;
+  }
+  return true;
  }
 
  ifstream* checkExistingFile(const string& fileName) {
@@ -58,14 +76,13 @@ class FileManager {
 
  bool createNewDir(const string& path) {
   try {
-   if (create_directory(path)) {
+   if (create_directory(path) && !checkDirExists(path)) {
     return true;
    }
-   else {
-    return false;
-   }
+   return false;
   }
   catch (filesystem_error& err) {
+   cout << "sys err " << endl;
    return false;
   }
  }

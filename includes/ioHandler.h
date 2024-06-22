@@ -22,6 +22,7 @@ class IoHandler {
     cin.clear();
     cin.ignore(numeric_limits < streamsize > ::max());
     cout << endl << reply << endl;
+    input = false;
    }
    input = false;
   }

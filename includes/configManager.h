@@ -93,7 +93,7 @@ class ConfigManager {
  string createPassword() {
   string password = ioHandler.getInput < string > ({
    {
-    "We strongly suggest a secure and strong password containing :"
+    "\nWe strongly suggest a secure and strong password containing:"
    },
    {
     "- At least 8 characters *"
@@ -126,7 +126,17 @@ class ConfigManager {
   return pin;
  };
 
- bool initializeConfig(string username, string email, string password, int pin, ofstream* configFile) {
+ bool nameMainDir(const string& dirname) {
+  bool newDirCreated = fileManager.createNewDir("/" + dirname);
+  if (!newDirCreated) {
+   exceptionHandler.printPlainError("Make sure you have permissions set to rwx in your root directory in order for us to create your account");
+   return false;
+  }
+  return true;
+ }
+
+ bool initializeConfig(const string& username, const string& email, string password, int pin,
+  const string& mainDir, ofstream* configFile) {
   if (username.size() < 1 || email.size() < 1 || password.size() < 1 || pin < 1000) {
    exceptionHandler.printPlainError("You must complete the registration process before creating a new account");
    return false;
@@ -136,6 +146,7 @@ class ConfigManager {
   *configFile << "email: " << email << "\n";
   *configFile << "password: " << password << "\n";
   *configFile << "pin: " << pin << "\n";
+  *configFile << "maindir: " << mainDir << "\n";
   return true;
  }
 
@@ -230,7 +241,7 @@ class ConfigManager {
   if (rows.size() == 0) {
    return 1;
   }
-  if (rows.size() < 5) {
+  if (rows.size() < 6) {
    exceptionHandler.handleError(
     {
      {
@@ -240,7 +251,7 @@ class ConfigManager {
     "Would you like to continue where you left off? (Y/n)"
    );
   }
-  if (rows.size() == 5) {
+  if (rows.size() == 6) {
    string loggedInLine = rows[0];
    if (loggedInLine == "true") {
     return 0;
@@ -266,7 +277,16 @@ class ConfigManager {
   string newEmail = createEmail();
   string newPassword = createPassword();
   int newPin = createPin();
-  bool configInitialized = initializeConfig(newName, newEmail, newPassword, newPin, configFile);
+  string mainDir = ioHandler.getInput < string > ({{
+   "\nWe will be storing all of your notes at the root of your system in an accessible manner if you decide to manually update them."
+  }}, "Main directory: ", "Please provide a valid name for this new directory");
+  bool newMainDir = nameMainDir(mainDir);
+  if (!newMainDir) {
+   // Handle try again logic this is necessary
+   return;
+  }
+  bool configInitialized = initializeConfig(newName, newEmail, newPassword,
+   newPin, mainDir, configFile);
   if (configInitialized) {
    system("clear");
    cout << "\nWe officially created a new account for you. More configuration can be done within your settings. Happy notes taking!!!\n" << endl;
