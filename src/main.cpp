@@ -40,12 +40,15 @@ const vector < string > settings = {
  "3. Main menu"
 };
 
-void createNewFile(const string& fileName) {
+void createNewFile() {
+    string fileName = ioHandler.getInput<string>({{"Give your new note a name"}}, "New name: ", "Please provide the file with a valid name");
  ofstream* newFile = fileManager.createNewFile(fileName);
  if (!newFile) {
-  exceptionHandler.printPlainError("We could not create a new file on your device. Please make sure you give rwx permissions for this directory");
-  delete newFile;
+   exceptionHandler.printPlainError("Please make sure you have the necessary read write permissions set to your main directory" + userInfo[6] + "We could not create your new note");
+    delete newFile;
+    printMenu();
  }
+     // grab all available directories the user can select from to save the new note in
  initscr();
  raw();
  keypad(stdscr, TRUE);
@@ -87,6 +90,95 @@ void createNewFile(const string& fileName) {
   }
  }
  endwin();
+    for (char textCh : text) {
+        *newFile >> textCh;
+    }
+    cout << "Your new note " << fileName << " was successfully saved" << endl;
+    printMenu();
+}
+
+void createNewDir() {
+    string newDirName = ioHandler.getInput<string>({{"Give your new directory a name"}}, "New dir: ", "Please provide a valid directory name");
+    // grab all available directories the user can select from to save the new directory in
+    bool dirCreated = fileManager.createNewDir(newDirName);
+    if (!dirCreated) {
+        exceptionHandler.printPlainError("We could not create your new folder. Please make sure you have the correct access rights set in your main directory " + userInfo[6]);
+        printMenu();
+        return;
+    }
+    cout << "New folder " << newDirName << " created" << endl;
+    printMenu();
+}
+
+void initializeTextEditor(const string& text) {
+    if (text.empty()) {
+        initscr();
+        raw();
+        keypad(stdscr, TRUE);
+        noecho();
+        int ch;
+        int x;
+        int y;
+        string text;
+        //printw(fileName + "\n\n");
+        move(1, 0);
+        while ((ch = getch()) != 27) {
+        switch (ch) {
+        case KEY_BACKSPACE:
+        case 127: {
+            if (!text.empty()) {
+            text.pop_back();
+            getyx(stdscr, y, x);
+            if (x > 0) x--;
+            if (y > 1) {
+            y--;
+            x = getmaxx(stdscr) - 1;
+            }
+            mvdelch(y, x);
+            refresh();
+            }
+        }
+        break;
+        case '\n':
+        text += "\n";
+        getyx(stdscr, y, x);
+        move(y + 1, 0);
+        refresh();
+        break;
+        default:
+        text += ch;
+        addch(ch);
+        refresh();
+        break;
+        }
+        }
+        endwin();
+    } else {
+
+    }
+}
+
+void openNote() {
+    string noteString = ioHandler.getInput({{"Open note"}}, "Name of file: ", "Please input a valid file name");
+    fstream* note = fileManager.openFileReadWrite(noteString);
+    if (!note) {
+        exceptionHandler.printPlainError("We could not open your note. Please make sure you have permissions set correctly on your file");
+        printMenu();
+        delete note;
+    }
+    string value;
+    while (getline(line, *note)) {
+        value += line;
+    }
+    cout << value << endl << end;
+    char action = ioHandler.getInput<char>({{"Type 'Q' to quit"}, {"Type E to edit"}}, "", "Please provide a valid option");
+    if (action == "E") {
+       initializeTextEditor(value);
+    } else {
+        system("clear");
+        delete note;
+        printMenu();
+    }
 }
 
 void selectSettingsAction(int option) {
@@ -110,11 +202,17 @@ void selectAction(int option) {
  switch (option) {
   case 1:
   system("clear");
-  createNewFile("New file");
+  createNewFile();
+  break;
+  case 2: 
+  openNote();
+  // open note
   break;
   case 2:
-  cout << "hsjs";
-  //fileManager.createNewDir();
+  createNewDir();
+  break;
+  case 4:
+  // open folder
   break;
   case 3:
   system("clear");
