@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdio>
+#include <cstdlib>
 #include <unistd.h>
 #include <string>
 #include <vector>
@@ -10,6 +11,18 @@ using namespace filesystem;
 
 #ifndef FILEMANAGER_H
 #define FILEMANAGER_H
+
+#ifdef _WIN32
+const std::string HOME_DIR = std::getenv("USERPROFILE");
+#elif defined(__APPLE__)
+const std::string HOME_DIR = std::getenv("HOME");
+#elif defined(__linux__)
+const std::string HOME_DIR = std::getenv("HOME");
+#elif defined(__ANDROID__)
+const std::string HOME_DIR = "/data/data/com.termux/files/home";
+#else
+const std::string HOME_DIR = std::getenv("HOME");
+#endif
 
 class FileManager {
  private:
@@ -27,10 +40,18 @@ class FileManager {
  }
 
  bool navigateDir(const string& dirPath) {
-  if (!checkDirExists(dirPath)) {
+  string absolutePath = HOME_DIR + dirPath;
+  if (!checkDirExists(absolutePath)) {
+   cout << "path does not exist" << endl << HOME_DIR + dirPath << endl;
    return false;
   }
-  if (!chdir(dirPath.c_str())) {
+  try {
+   if (chdir(absolutePath.c_str()) != 0) {
+    cout << "Error changing dir " << strerror(errno) << endl;
+    return false;
+   }
+  } catch (filesystem_error& err) {
+   cout << "catch block err: " << err.what() << endl;
    return false;
   }
   return true;
@@ -76,13 +97,13 @@ class FileManager {
 
  bool createNewDir(const string& path) {
   try {
-   if (create_directory(path) && !checkDirExists(path)) {
+   if (create_directory(HOME_DIR + path)) {
     return true;
    }
    return false;
   }
   catch (filesystem_error& err) {
-   cout << "sys err " << endl;
+   cout << endl << "sys err " << err.what() << endl;
    return false;
   }
  }

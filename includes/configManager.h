@@ -146,7 +146,7 @@ class ConfigManager {
   *configFile << "email: " << email << "\n";
   *configFile << "password: " << password << "\n";
   *configFile << "pin: " << pin << "\n";
-  *configFile << "maindir: " << mainDir << "\n";
+  *configFile << "maindir: " << "/" + mainDir << "\n";
   return true;
  }
 
