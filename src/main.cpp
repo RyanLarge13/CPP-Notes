@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include "../includes/colors.h"
 #include "../includes/fileManager.h"
 #include "../includes/configManager.h"
 #include "../includes/ioHandler.h"
@@ -196,14 +197,16 @@ void openNote() {
 }
 
 void openDir() {
-    string dir = ioHandler.getInput<string>({{""}}, "Folder: ", "Please provide a valid folder name");
-    bool navigated = fileManager.navigateDir(dir);
-    if (!navigated) {
-        printMenu();
-        return;
-    }
-    cout << endl << "Folder: " + dir << endl;
-    printMenu();
+ string dir = ioHandler.getInput < string > ({{
+  ""
+ }}, "Folder: ", "Please provide a valid folder name");
+ bool navigated = fileManager.navigateDir(dir);
+ if (!navigated) {
+  printMenu();
+  return;
+ }
+ cout << endl << "Folder: " + dir << endl;
+ printMenu();
 }
 
 void selectSettingsAction(int option) {
@@ -257,7 +260,7 @@ void selectAction(int option) {
   createNewDir();
   break;
   case 4:
-  openDir()
+  openDir();
   break;
   case 5:
   system("clear");
@@ -307,17 +310,17 @@ void printMenu() {
   cout << option << endl;
  }
  cout << endl << endl;
- vector <vector<DirVectorData>, vector<string>> filesAndDirs = fileManager.grabDirsAndFiles();
- vector<DirVectorData> dirs = filesAndDirs[0];
- vector <string> files = filesAndDirs[1]; 
- // loop over folders and files. Print available options and accessible folders/notes;
- // to the screen so the user can navigate through their notes
- for (int i = 0; i < dirs.size(); i++) {
-    DirVectorData dir = dirs[i];
-    cout << dir.path << " Folders: " << dir.nestedDirsCt << " Notes: " << dir.nestedFilesCt << " | ";
+ auto filesAndDirs = fileManager.grabDirsAndFiles();
+ auto& dirs = filesAndDirs.first;
+ auto& files = filesAndDirs.second;
+ for (const auto& dir: dirs) {
+  cout << RED + dir.path + ENDCOLOR << " ";
+  cout << YELLOW << dir.nestedDirCt << ENDCOLOR << " ";
+  cout << BLUE << dir.nestedFileCt << ENDCOLOR << " ";
  }
-  for (int i = 0; i < files.size(); i++) {
-    cout << files[i] << " ";
+ cout << endl;
+ for (const auto& file: files) {
+  cout << BLUE + file + ENDCOLOR << " ";
  }
  cout << endl;
  int selection = ioHandler.getInput < int > ({{
@@ -354,7 +357,7 @@ void checkForAccount() {
   if (accountEstablished == 0) {
    printMenu();
   }
-   delete config;
+  delete config;
  }
 }
 

@@ -1,12 +1,12 @@
 #include <iostream>
+
 using namespace std;
 
-extern string RED;
-extern string BLUE;
-extern string YELLOW;
-extern string GREEN;
-extern string PURPLE;
-extern string PINK;
-extern string ORANGE;
-extern string VIOLET;
-
+extern string colorRed;
+extern string colorBlue;
+extern string colorYellow;
+extern string colorPurple;
+extern string colorCyan;
+extern string colorBlack;
+extern string colorWhite;
+extern string endColor;
