@@ -26,7 +26,22 @@ const std::string HOME_DIR = std::getenv("HOME");
 
 class FileManager {
  private:
+
  public:
+static struct DirVetorData {
+    string path;
+    int nestedDirectories;
+    int nestedFiles;
+    DirVectorData(const string& p, int nd, int nf): path(p), nestedDirectories(nd), nestedFiles(nf) {}
+};
+
+ bool isCorrectExt(auto& entry) {
+    string extension = entry.path().extension().string();
+    if (extension == ".wn") {
+        return true;
+    }
+    return false;
+ }
 
  void closeFile(fstream* file) {
   file->close();
@@ -37,6 +52,35 @@ class FileManager {
    return true;
   }
   return false;
+ }
+
+ vector <vector <DirVectorData>, vector<string>> grabDirsAndFiles() {
+    vector<DirVectorData> dirs;
+    vector<string> files;
+    path currentPath = current_path();
+    for (const auto& entry : directory_iterator(currentPath)) {
+        int nestedDirsCt = 0;
+        int nestedFilesCt = 0;
+        if (is_directory(entry.status())) {
+            for (const auto& item : directory_iterator(entry.path())) {
+                if (is_directory(item.status())) {
+                    nestedDirsCt++;
+                }
+                if (is_regular_file(item.status()) && isCorrectExt(item)) {
+                    nestedFilesCt++;
+                }
+            }
+            dirs.emplace_back(entry.path().string(), nestedDirsCt, nestedFilesCt);
+        }
+        if (is_regular_file(entry.status()) && isCorrectExt(entry)) {
+            files.push_back(entry.filename().string());
+        }
+    }
+    return {dirs, files};
+ }
+
+ void printFiles() {
+
  }
 
  bool navigateDir(const string& dirPath) {

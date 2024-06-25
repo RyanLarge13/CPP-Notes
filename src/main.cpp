@@ -185,7 +185,7 @@ void openNote() {
   "Type 'Q' to quit"
  }, {
   "Type E to edit"
- }}, "", "Please provide a valid option");
+ }}, "Command: ", "Please provide a valid option");
  if (action == 'E') {
   initializeTextEditor(value);
  } else {
@@ -193,6 +193,17 @@ void openNote() {
   delete note;
   printMenu();
  }
+}
+
+void openDir() {
+    string dir = ioHandler.getInput<string>({{""}}, "Folder: ", "Please provide a valid folder name");
+    bool navigated = fileManager.navigateDir(dir);
+    if (!navigated) {
+        printMenu();
+        return;
+    }
+    cout << endl << "Folder: " + dir << endl;
+    printMenu();
 }
 
 void selectSettingsAction(int option) {
@@ -246,7 +257,7 @@ void selectAction(int option) {
   createNewDir();
   break;
   case 4:
-  // open folder
+  openDir()
   break;
   case 5:
   system("clear");
@@ -291,9 +302,24 @@ void printMenu() {
  }
  cout << "Welcome " << userInfo[1] << endl;
  cout << "**************" << endl;
+ int optionCt = options.size();
  for (const string& option: options) {
   cout << option << endl;
  }
+ cout << endl << endl;
+ vector <vector<DirVectorData>, vector<string>> filesAndDirs = fileManager.grabDirsAndFiles();
+ vector<DirVectorData> dirs = filesAndDirs[0];
+ vector <string> files = filesAndDirs[1]; 
+ // loop over folders and files. Print available options and accessible folders/notes;
+ // to the screen so the user can navigate through their notes
+ for (int i = 0; i < dirs.size(); i++) {
+    DirVectorData dir = dirs[i];
+    cout << dir.path << " Folders: " << dir.nestedDirsCt << " Notes: " << dir.nestedFilesCt << " | ";
+ }
+  for (int i = 0; i < files.size(); i++) {
+    cout << files[i] << " ";
+ }
+ cout << endl;
  int selection = ioHandler.getInput < int > ({{
   ""
  }}, "Option: ", "Please select a number as an option");
@@ -310,8 +336,10 @@ void printMenu() {
 void checkForAccount() {
  ifstream* config = configManager.checkForLocalConfigFile("config.yaml");
  if (!config) {
+  delete config;
   ofstream* newConfig = configManager.createConfigFile("config.yaml");
   if (!newConfig) {
+   delete newConfig;
    return;
   }
   configManager.createAccount(newConfig);
@@ -325,8 +353,8 @@ void checkForAccount() {
   }
   if (accountEstablished == 0) {
    printMenu();
-   delete config;
   }
+   delete config;
  }
 }
 
