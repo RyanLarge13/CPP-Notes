@@ -27,28 +27,33 @@ vector < string > userInfo;
 
 const vector < string > options = {
  "1. New Note",
- "2. New Folder",
- "3. Settings",
- "4. Logout",
- "5. Quit (stay logged in)",
- "6. Delete Account"
+ "2. Open Note",
+ "3. New Folder",
+ "4. Open Folder",
+ "5. Settings",
+ "6. Logout",
+ "7. Quit (stay logged in)",
+ "8. Delete Account"
 };
 
 const vector < string > settings = {
  "1. Update profile",
  "2. Create option",
- "3. Main menu"
+ "3. Main menu",
+ "4. Delete Account"
 };
 
 void createNewFile() {
-    string fileName = ioHandler.getInput<string>({{"Give your new note a name"}}, "New name: ", "Please provide the file with a valid name");
+ string fileName = ioHandler.getInput < string > ({{
+  "Give your new note a name"
+ }}, "New name: ", "Please provide the file with a valid name");
  ofstream* newFile = fileManager.createNewFile(fileName);
  if (!newFile) {
-   exceptionHandler.printPlainError("Please make sure you have the necessary read write permissions set to your main directory" + userInfo[6] + "We could not create your new note");
-    delete newFile;
-    printMenu();
+  exceptionHandler.printPlainError("Please make sure you have the necessary read write permissions set to your main directory" + userInfo[6] + "We could not create your new note");
+  delete newFile;
+  printMenu();
  }
-     // grab all available directories the user can select from to save the new note in
+ // grab all available directories the user can select from to save the new note in
  initscr();
  raw();
  keypad(stdscr, TRUE);
@@ -90,95 +95,104 @@ void createNewFile() {
   }
  }
  endwin();
-    for (char textCh : text) {
-        *newFile >> textCh;
-    }
-    cout << "Your new note " << fileName << " was successfully saved" << endl;
-    printMenu();
+ for (char textCh: text) {
+  *newFile << textCh;
+ }
+ newFile->close();
+ delete newFile;
+ cout << "Your new note " << fileName << " was successfully saved" << endl;
+ printMenu();
 }
 
 void createNewDir() {
-    string newDirName = ioHandler.getInput<string>({{"Give your new directory a name"}}, "New dir: ", "Please provide a valid directory name");
-    // grab all available directories the user can select from to save the new directory in
-    bool dirCreated = fileManager.createNewDir(newDirName);
-    if (!dirCreated) {
-        exceptionHandler.printPlainError("We could not create your new folder. Please make sure you have the correct access rights set in your main directory " + userInfo[6]);
-        printMenu();
-        return;
-    }
-    cout << "New folder " << newDirName << " created" << endl;
-    printMenu();
+ string newDirName = ioHandler.getInput < string > ({{
+  "Give your new directory a name"
+ }}, "New dir: ", "Please provide a valid directory name");
+ // grab all available directories the user can select from to save the new directory in
+ bool dirCreated = fileManager.createNewDir(newDirName);
+ if (!dirCreated) {
+  exceptionHandler.printPlainError("We could not create your new folder. Please make sure you have the correct access rights set in your main directory " + userInfo[6]);
+  printMenu();
+  return;
+ }
+ cout << "New folder " << newDirName << " created" << endl;
+ printMenu();
 }
 
 void initializeTextEditor(const string& text) {
-    if (text.empty()) {
-        initscr();
-        raw();
-        keypad(stdscr, TRUE);
-        noecho();
-        int ch;
-        int x;
-        int y;
-        string text;
-        //printw(fileName + "\n\n");
-        move(1, 0);
-        while ((ch = getch()) != 27) {
-        switch (ch) {
-        case KEY_BACKSPACE:
-        case 127: {
-            if (!text.empty()) {
-            text.pop_back();
-            getyx(stdscr, y, x);
-            if (x > 0) x--;
-            if (y > 1) {
-            y--;
-            x = getmaxx(stdscr) - 1;
-            }
-            mvdelch(y, x);
-            refresh();
-            }
-        }
-        break;
-        case '\n':
-        text += "\n";
-        getyx(stdscr, y, x);
-        move(y + 1, 0);
-        refresh();
-        break;
-        default:
-        text += ch;
-        addch(ch);
-        refresh();
-        break;
-        }
-        }
-        endwin();
-    } else {
-
+ if (text.empty()) {
+  initscr();
+  raw();
+  keypad(stdscr, TRUE);
+  noecho();
+  int ch;
+  int x;
+  int y;
+  string text;
+  //printw(fileName + "\n\n");
+  move(1, 0);
+  while ((ch = getch()) != 27) {
+   switch (ch) {
+    case KEY_BACKSPACE:
+    case 127: {
+     if (!text.empty()) {
+      text.pop_back();
+      getyx(stdscr, y, x);
+      if (x > 0) x--;
+      if (y > 1) {
+       y--;
+       x = getmaxx(stdscr) - 1;
+      }
+      mvdelch(y, x);
+      refresh();
+     }
     }
+    break;
+    case '\n':
+    text += "\n";
+    getyx(stdscr, y, x);
+    move(y + 1, 0);
+    refresh();
+    break;
+    default:
+    text += ch;
+    addch(ch);
+    refresh();
+    break;
+   }
+  }
+  endwin();
+ } else {}
 }
 
 void openNote() {
-    string noteString = ioHandler.getInput({{"Open note"}}, "Name of file: ", "Please input a valid file name");
-    fstream* note = fileManager.openFileReadWrite(noteString);
-    if (!note) {
-        exceptionHandler.printPlainError("We could not open your note. Please make sure you have permissions set correctly on your file");
-        printMenu();
-        delete note;
-    }
-    string value;
-    while (getline(line, *note)) {
-        value += line;
-    }
-    cout << value << endl << end;
-    char action = ioHandler.getInput<char>({{"Type 'Q' to quit"}, {"Type E to edit"}}, "", "Please provide a valid option");
-    if (action == "E") {
-       initializeTextEditor(value);
-    } else {
-        system("clear");
-        delete note;
-        printMenu();
-    }
+ string noteString = ioHandler.getInput < string > ({{
+  "Open note"
+ }}, "Name of file: ", "Please input a valid file name");
+ fstream* note = fileManager.openFileReadWrite(noteString);
+ if (!note) {
+  exceptionHandler.printPlainError("We could not open your note. Please make sure you have permissions set correctly on your file");
+  printMenu();
+  delete note;
+ }
+ string value;
+ string line;
+ while (getline(*note, line)) {
+  value += line;
+ }
+ cout << value << endl << endl;
+ char action = ioHandler.getInput < char > ({{
+  "Type 'Q' to quit"
+ }, {
+  "Type E to edit"
+ }}, "", "Please provide a valid option");
+ if (action == 'E') {
+  initializeTextEditor(value);
+ } else {
+  system("clear");
+  delete note;
+  printMenu();
+ }
 }
 
 void selectSettingsAction(int option) {
@@ -193,39 +207,7 @@ void selectSettingsAction(int option) {
   system("clear");
   printMenu();
   break;
-  default:
-  break;
- }
-}
-
-void selectAction(int option) {
- switch (option) {
-  case 1:
-  system("clear");
-  createNewFile();
-  break;
-  case 2: 
-  openNote();
-  // open note
-  break;
-  case 2:
-  createNewDir();
-  break;
-  case 4:
-  // open folder
-  break;
-  case 3:
-  system("clear");
-  printSettings();
-  break;
-  case 4:
-  system("clear");
-  configManager.logout();
-  break;
-  case 5:
-  system("clear");
-  break;
-  case 6: {
+  case 4: {
    system("clear");
    string userInput = ioHandler.getInput < string > (
     {
@@ -245,6 +227,37 @@ void selectAction(int option) {
     printMenu();
    }
   }
+  break;
+  default:
+  break;
+ }
+}
+
+void selectAction(int option) {
+ switch (option) {
+  case 1:
+  system("clear");
+  createNewFile();
+  break;
+  case 2:
+  openNote();
+  break;
+  case 3:
+  createNewDir();
+  break;
+  case 4:
+  // open folder
+  break;
+  case 5:
+  system("clear");
+  printSettings();
+  break;
+  case 6:
+  system("clear");
+  configManager.logout();
+  break;
+  case 7:
+  system("clear");
   break;
   default:
   system("clear");
@@ -284,7 +297,7 @@ void printMenu() {
  int selection = ioHandler.getInput < int > ({{
   ""
  }}, "Option: ", "Please select a number as an option");
- if (selection < 1 || selection > 6) {
+ if (selection < 1 || selection > 7) {
   system("clear");
   exceptionHandler.printPlainError("Please select an available option from the menu. Or you can create a new option in your settings\n");
   printMenu();
