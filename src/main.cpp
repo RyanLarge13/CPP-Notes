@@ -107,8 +107,8 @@ void createNewFile() {
 
 void createNewDir() {
  string newDirName = ioHandler.getInput < string > ({{
-  "Give your new directory a name"
- }}, "New dir: ", "Please provide a valid directory name");
+  "Give your new folder a name"
+ }}, "New folder: ", "Please provide a valid directory name");
  // grab all available directories the user can select from to save the new directory in
  bool dirCreated = fileManager.createNewDir(newDirName);
  if (!dirCreated) {
@@ -205,7 +205,7 @@ void openDir() {
   printMenu();
   return;
  }
- cout << endl << "Folder: " + dir << endl;
+ cout << endl << "Folder: " + RED + dir + ENDCOLOR << endl;
  printMenu();
 }
 
