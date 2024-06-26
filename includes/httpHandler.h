@@ -13,7 +13,10 @@ class HttpHandler {
     bool saveNote(const string& note, const string& title, const int& folderId, const bool& locked, const string& url) {
         CURL 8curl;
         CURLcode res;
+        // global init will need to happen in the constructor
         curl_global_init(CURL_GLOBAL_DEFAULT);
+        // curl_global_cleanup call cleanup when exiting the program
+        // global init will need to happen in the constructor
         curl = curl_easy_init();
         if (curl) {
             struct curl_slist *headers = NULL;
@@ -22,12 +25,17 @@ class HttpHandler {
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
             curl_easy_setopt(curl, CURL_POSTFIELDS, jsonData.c_str());
+            // use this for debugging CURLOPT_VERBOSE
+            // If you at any point would like to blank all previously set options for a single easy handle, you can call
+            // curl_easy_reset and you can also make a clone of an easy handle (with all its set options) using curl_easy_duphandle.
             res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
                 cout << RED + "Network request failed: " + ENDLCOLOR << endl;
                 cout << stderr << endl;
                 cout << "Response: " << endl << curl_easy_strerror(res) << endl;
             }
+            // call reset if needed to clean up opts curl_easy_reset();
+            // skip cleanup to continue using the handle
             curl_easy_cleanup(curl);
         }
         curl_global_cleanup();
