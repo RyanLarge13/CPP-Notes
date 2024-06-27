@@ -3,6 +3,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <colors.h>
 #include "../common/ioHandlerInstance.h"
 #include "../common/fileManagerInstance.h"
 #include "../common/exceptionHandlerInstance.h"
@@ -13,6 +14,16 @@ using namespace std;
 
 class ConfigManager {
  private:
+
+ void confirmPass(const string& password) {
+    string confirmPassword = ioHandler.getInput<string>({{"Confirm your password"}}, "Confirm Password: ", "Please input valid characters");
+    if (confirmPassword == password) {
+        return;
+    } else {
+        exceptionHandler.printPlainError("Please type in your password again exactly the same as the first time");
+        return confirmPass(password);
+    }
+  }
 
  string eraseWhiteSpace(string value) {
   value.erase(value.begin(), find_if(value.begin(), value.end(), [](int ch) {
@@ -76,6 +87,13 @@ class ConfigManager {
    exceptionHandler.printPlainError("Your username must be at least 3 characters in length");
    return createUsername();
   }
+  string confirm = ioHandler.getInput<string>({{"Confirm " + RED + username + ENDCOLOR + " is the username you want"}}, GREEN = "(Y/n): " + ENDCOLOR, "Please give a valid answer, Y for yes n for no");
+  if (confirm == "Y" || confirm == "y") {
+    return username;
+  } else {
+    cout << endl << BLUE + "Okay try again" + ENDCOLOR << endl;
+    return createUsername();
+  }
   return username;
  };
 
@@ -86,6 +104,13 @@ class ConfigManager {
   if (email.length() < 5) {
    exceptionHandler.printPlainError("This email is too short. Please provide a valid email");
    return createEmail();
+  }
+  string confirm = ioHandler.getInput<string>({{"Confirm " + RED + email + ENDCOLOR + " is the email you want"}}, GREEn + "(Y/n): " + ENDCOLOR, "Please give a valid answer, Y for yes, n for no");
+  if (confirm == "Y" || confirm == "y") {
+    return email;
+  } else {
+    cout << endl << BLUE + "Okay, try again" + ENDCOLOR << endl;
+    return createEmail();
   }
   return email;
  }
@@ -109,9 +134,11 @@ class ConfigManager {
    }
   }, "New Password: ", "Please create a valid password");
   if (password.length() < 8) {
+    system("clear");
    exceptionHandler.printPlainError("Your password must be at least 8 characters in length");
    return createPassword();
   }
+  confirmPass(password);
   return password;
  };
 
@@ -122,6 +149,14 @@ class ConfigManager {
   if (pin > 9999 || pin < 1000) {
    cout << "Your new pin must be a 4-digit number" << endl;
    return createPin();
+  }
+  string confirm = ioHandler.getInput<string>({{"Confirm " RED + to_string(pin) + ENDCOLOR + " is what you want your new pin to be"}}, "(Y/n): ", "Please provide a valid response, Y for yes, n for no");
+  if (confirm == "Y" || confirm == "y") {
+    return pin;
+  } else {
+    system("clear");
+    cout << BLUE + "Okay, try again" << endl;
+    return createPin();
   }
   return pin;
  };
@@ -271,8 +306,15 @@ class ConfigManager {
  }
 
  void createAccount(ofstream* configFile) {
-  cout << "Let create an account" << endl << "Welcome to CPP-Notes" << endl;
-  cout << endl << "First we need to create a new username, email, password and a new pin incase you want to lock your notes" << endl;
+  cout << "Let's create an account" << endl << "Welcome to CPP-Notes" << endl;
+  string remoteAccount = ioHandler.getInput<string>({{"This application is a sister application to Native Notes, and Electron Notes"}}, "Do you already have an existing account with one of these platforms?", "Pleas provide a valid answer");
+  if (remoteAccount == "y" || remoteAccount == "Y") {
+    cout << endl << "That is great news! This will be very easy. We will set up your account on here with the same credentials as electron notes, just make sure you provide the same username, password and email as your online account so we can sync your notes" << endl;
+    cout << endl << "If the online account connection fails that is okay. We will finish creating your account and you can play with your settings and account info later" << endl;
+  } else {
+    cout << endl << "Okay, no problem let's create a new username, email, password and a new pin incase you want to lock your notes." << endl;
+    cout << "We can create an online account later if you want to" << endl;
+  }
   string newName = createUsername();
   string newEmail = createEmail();
   string newPassword = createPassword();
