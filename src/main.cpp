@@ -24,6 +24,7 @@ IoHandler ioHandler;
 
 void printMenu();
 void printSettings();
+auto dirInfo;
 vector < string > userInfo;
 
 const vector < string > options = {
@@ -44,32 +45,35 @@ const vector < string > settings = {
  "4. Delete Account"
 };
 
-void printDir(auto filesAndDirs, const bool& showIndex, const int& start) {
-    int iterator = start;
-    auto& dirs = filesAndDirs.first;
-    auto& files = filesAndDirs.second;
-    for (const auto& dir: dirs) {
-        if (showIndex) {
-            cout << BLUE + to_string(iterator) + ENDCOLOR;
-        }
-        cout << RED + dir.path + ENDCOLOR << " ";
-        cout << YELLOW << dir.nestedDirCt << ENDCOLOR << " ";
-        cout << BLUE << dir.nestedFileCt << ENDCOLOR << " ";
-        if (showIndex) {
-            iterator++;
-        }
-    }
-    cout << endl;
-    for (const auto& file: files) {
-        if (showIndex) {
-            cout << PURPLE + to_string(iterator) + ENDCOLOR;
-        }
-        cout << BLUE + file + ENDCOLOR << " ";
-        if (showIndex) {
-            iterator++;
-        }
-    }
-    cout << endl;
+void printDirs(const bool& showIndex, const int& start) {
+ int iterator = start;
+ auto& dirs = dirInfo.first;
+ auto& files = dirInfo.second;
+ for (const auto& dir: dirs) {
+  if (showIndex) {
+   cout << BLUE + to_string(iterator) + ENDCOLOR;
+  }
+  cout << RED + dir.path + ENDCOLOR << " ";
+  cout << YELLOW << dir.nestedDirCt << ENDCOLOR << " ";
+  cout << BLUE << dir.nestedFileCt << ENDCOLOR << " ";
+  if (showIndex) {
+   iterator++;
+  }
+ }
+ cout << endl;
+}
+
+void printFiles(const bool& showIndex, const int& start) {
+ for (const auto& file: files) {
+  if (showIndex) {
+   cout << PURPLE + to_string(iterator) + ENDCOLOR;
+  }
+  cout << BLUE + file + ENDCOLOR << " ";
+  if (showIndex) {
+   iterator++;
+  }
+ }
+ cout << endl;
 }
 
 void createNewFile() {
@@ -225,21 +229,11 @@ void openNote() {
 }
 
 void openDir() {
-//  string dir = ioHandler.getInput < string > ({{
-//   ""
-//  }}, "Folder: ", "Please provide a valid folder name");
-//  bool navigated = fileManager.navigateDir(dir);
-//  if (!navigated) {
-//   printMenu();
-//   return;
-//  }
-//  cout << endl << "Folder: " + RED + dir + ENDCOLOR << endl;
-//  printMenu();
-    system("clear");
-    auto filesAndDirs = fileManager.grabDirsAndFiles();
-    printDir(filesAndDirs, true, 0);
-    int selection = ioHandler.getInput<int>({{""}}, "Folder: ", "Please provide a valid input");
-    // if (selection)
+ system("clear");
+ printDir(true, 0);
+ int selection = ioHandler.getInput < int > ({{
+  ""
+ }}, "Folder #: ", "Please provide a valid input");
 }
 
 void selectSettingsAction(int option) {
@@ -343,21 +337,8 @@ void printMenu() {
   cout << option << endl;
  }
  cout << endl << endl;
-auto filesAndDirs = fileManager.grabDirsAndFiles();
- printDir(filesAndDirs, false, optionCt);
-//  auto filesAndDirs = fileManager.grabDirsAndFiles();
-//  auto& dirs = filesAndDirs.first;
-//  auto& files = filesAndDirs.second;
-//  for (const auto& dir: dirs) {
-//   cout << RED + dir.path + ENDCOLOR << " ";
-//   cout << YELLOW << dir.nestedDirCt << ENDCOLOR << " ";
-//   cout << BLUE << dir.nestedFileCt << ENDCOLOR << " ";
-//  }
-//  cout << endl;
-//  for (const auto& file: files) {
-//   cout << BLUE + file + ENDCOLOR << " ";
-//  }
-//  cout << endl;
+ printDirs(false, 0);
+ printFiles(false, 0);
  int selection = ioHandler.getInput < int > ({{
   ""
  }}, "Option: ", "Please select a number as an option");
@@ -390,6 +371,7 @@ void checkForAccount() {
    return;
   }
   if (accountEstablished == 0) {
+   dirInfo = fileManager.grabDirsAndFiles();
    printMenu();
   }
   delete config;
