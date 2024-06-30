@@ -49,19 +49,16 @@ void printDirs(const bool& showIndex, const int& start) {
     int iterator = start;
     auto& dirs = dirInfo.first;
     if (dirs.size() < 1) {
-        cout << "no len folders" << endl;
         return;
     }
     for (const auto& dir : dirs) {
         if (showIndex) {
-            cout << BLUE + to_string(iterator) + ENDCOLOR;
+            cout << BLUE + "#" + to_string(iterator) + ENDCOLOR << " ";
+            iterator++;
         }
         cout << RED + dir.path + ENDCOLOR << " ";
         cout << YELLOW << dir.nestedDirCt << ENDCOLOR << " ";
-        cout << BLUE << dir.nestedFileCt << ENDCOLOR << " ";
-        if (showIndex) {
-            iterator++;
-        }
+        cout << BLUE << dir.nestedFileCt << ENDCOLOR << "    ";
     }
     cout << endl;
 }
@@ -70,17 +67,14 @@ void printFiles(const bool& showIndex, const int& start) {
     int iterator = start;
     auto& files = dirInfo.second;
     if (files.size() < 1) {
-        cout << "no len files" << endl;
         return;
     }
     for (const auto& file : files) {
         if (showIndex) {
-            cout << PURPLE + to_string(iterator) + ENDCOLOR;
-        }
-        cout << BLUE + file + ENDCOLOR << " ";
-        if (showIndex) {
+            cout << PURPLE + "#" + to_string(iterator) + ENDCOLOR << " ";
             iterator++;
         }
+        cout << BLUE + file + ENDCOLOR << "    ";
     }
     cout << endl;
 }
@@ -243,6 +237,11 @@ void openNote() {
 
 void openDir() {
     system("clear");
+    if (dirInfo.first.size() < 1 && dirInfo.second.size() < 1) {
+        exceptionHandler.printPlainError("You have no folders or notes. Create one!!");
+        printMenu();
+        return;
+    }
     printDirs(true, 0);
     int selection = ioHandler.getInput < int >({ {
      ""
@@ -256,10 +255,11 @@ void openDir() {
         printMenu();
         return;
     }
+    string currentPath = fileManager.getCurrentPath();
     string folderString = dirInfo.first[selection].path;
-    fileManager.navigateDir(folderString);
+    string newDirPath = currentPath + "/" + folderString;
+    fileManager.navDir(newDirPath);
     system("clear");
-    cout << "Folder: " + RED + folderString + ENDCOLOR << endl << endl;
     printMenu();
     return;
 }
@@ -355,22 +355,6 @@ void printSettings() {
 }
 
 void printMenu() {
-    userInfo = configManager.getUserInfo(false);
-    // Make sure you uncomment this at some point and implement these checks
-    // bool mainNotesDirExists = fileManager.checkDirExists(userInfo[5]);
-    // if (!mainNotesDirExists) {
-    //     exceptionHandler.printPlainError("It seems you have either moved or deleted your notes directory. We are creating a new one new");
-    //     bool dirCreated = configManager.nameMainDir(userInfo[5]);
-    //     if (!dirCreated) {
-    //         // Make sure you print instructions on how to manually fix this problem before returning out of the program with exceptionHandler.printInstructions()
-    //         exceptionHandler.printPlainError("Please make sure you give the correct access rights to the home directory or the application will not work");
-    //         return;
-    //     }
-    // }
-    if (!fileManager.navigateDir(userInfo[5])) {
-        // Make sure you print instructions on how to manually fix this problem before returning out of the program with exceptionHandler.printInstructions()
-        exceptionHandler.printPlainError("Please make sure you give the correct access rights to the home directory or the application will not work");
-    }
     cout << "Folder: " << RED + userInfo[5] + ENDCOLOR << " " << endl << endl;
     cout << "Welcome " << userInfo[1] << endl;
     cout << "**************" << endl;
@@ -412,7 +396,13 @@ void checkForAccount() {
             return;
         }
         if (accountEstablished == 0) {
-            const auto& dirInfo = fileManager.grabDirsAndFiles();
+            userInfo = configManager.getUserInfo(false);
+            if (!fileManager.navigateDir(userInfo[5])) {
+                // Make sure you print instructions on how to manually fix this problem before returning out of the program with exceptionHandler.printInstructions()
+                exceptionHandler.printPlainError("Please make sure you give the correct access rights to the home directory or the application will not work");
+            }
+            const auto& info = fileManager.grabDirsAndFiles();
+            dirInfo = info;
             printMenu();
         }
         delete config;

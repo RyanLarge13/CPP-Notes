@@ -1,6 +1,6 @@
 # CPP-Notes
 
-CPP Notes is a console application built with primarily c++.
+CPP Notes is a console application built primarily with c++.
 
 This application is meant to be a console side app that works seamlessly in conjunction
 with

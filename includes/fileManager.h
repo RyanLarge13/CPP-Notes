@@ -52,7 +52,7 @@ public:
     }
 
     bool checkDirExists(const string& dirPath) {
-        if (exists(dirPath)) {
+        if (exists(HOME_DIR + dirPath)) {
             return true;
         }
         return false;
@@ -87,10 +87,33 @@ public:
         };
     }
 
+    string getCurrentPath() {
+        path currentPath = current_path();
+        return currentPath;
+    }
+
+    bool navDir(const string& dirPath) {
+        if (!checkDirExists(dirPath)) {
+            cout << "Does not exist returning from change dir" << endl;
+            return false;
+        }
+        try {
+            if (chdir(dirPath.c_str()) != 0) {
+                cout << "Error changing dir " << strerror(errno) << endl;
+                return false;
+            }
+        }
+        catch (filesystem_error& err) {
+            cout << "catch block err: " << err.what() << endl;
+            return false;
+        }
+        return true;
+    }
+
     bool navigateDir(const string& dirPath) {
         string absolutePath = HOME_DIR + dirPath;
-        if (!checkDirExists(absolutePath)) {
-            cout << "path does not exist" << endl << HOME_DIR + dirPath << endl;
+        if (!checkDirExists(dirPath)) {
+            cout << "Does not exist returning from change dir" << endl;
             return false;
         }
         try {
