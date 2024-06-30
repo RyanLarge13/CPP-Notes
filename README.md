@@ -16,3 +16,27 @@ When finished the console application will allow users to:
 2. Synchronize notes from your local environment to your server environment & vise versa
 3. Includes safe and encrypted data handling locally and over network
 4. Access your notes from the desktop application, mobile application or terminal
+
+## Compile && Run
+
+Make sure dependencies are first installed on your system
+
+Check out the dependencies section below
+[Deps](#Deps)
+
+```
+clang++ -o bin/myProg src/main.cpp -lncurses -lcurl
+```
+
+Ensure Clang Can Find the Libraries: If the libraries are installed in non-standard locations, you might need to specify the path to them. You can do this using the -L flag to specify the directory containing the libraries and the -I flag for the include directory. For example:
+
+```
+clang++ -o bin/myProg src/main.cpp -I/usr/include -L/usr/lib -lncurses -lcurl
+```
+
+Adjust /usr/include and /usr/lib to the correct paths on your system
+
+## Deps
+
+- sudo apt-get install libcurl4-openssl-dev
+- sudo apt-get install ncurses
