@@ -26,6 +26,7 @@ void printMenu();
 void printSettings();
 pair <vector<FileManager::DirVectorData>, vector <string>> dirInfo;
 vector < string > userInfo;
+string nestedPath = "";
 
 const vector < string > options = {
  "1. New Note",
@@ -205,10 +206,20 @@ void initializeTextEditor(const string& text) {
 }
 
 void openNote() {
-    string noteString = ioHandler.getInput < string >({ {
-     "Open note"
-    } }, "Name of file: ", "Please input a valid file name");
-    fstream* note = fileManager.openFileReadWrite(noteString);
+    if (dirInfo.second.size() < 1) {
+        exceptionHandler.printPlainError("You have no notes. Create one!!");
+        printMenu();
+        return;
+    }
+    printFiles(true, 0);
+    int selection = ioHandler.getInput < int >({ {
+     ""
+    } }, "Note #: ", "Pleas provide a valid input");
+    if (selection < 0 || selection > dirInfo.second.size()) {
+        exceptionHandler.printPlainError("Please select a valid note to navigate to or type 999 to return to menu");
+    }
+    string fileStr = dirInfo.second[selection];
+    fstream* note = fileManager.openFileReadWrite(fileStr);
     if (!note) {
         exceptionHandler.printPlainError("We could not open your note. Please make sure you have permissions set correctly on your file");
         printMenu();
@@ -237,8 +248,8 @@ void openNote() {
 
 void openDir() {
     system("clear");
-    if (dirInfo.first.size() < 1 && dirInfo.second.size() < 1) {
-        exceptionHandler.printPlainError("You have no folders or notes. Create one!!");
+    if (dirInfo.first.size() < 1) {
+        exceptionHandler.printPlainError("You have no folders. Create one!!");
         printMenu();
         return;
     }
@@ -259,6 +270,8 @@ void openDir() {
     string folderString = dirInfo.first[selection].path;
     string newDirPath = currentPath + "/" + folderString;
     fileManager.navDir(newDirPath);
+    auto& newDirInfo = fileManager.grabDirsAndFiles();
+    dirInfo = newDirInfo;
     system("clear");
     printMenu();
     return;
