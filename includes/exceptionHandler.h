@@ -1,41 +1,39 @@
 #include <iostream>
-#include <vector>
 #include <limits>
+#include <vector>
+
 using namespace std;
 
 #ifndef EXCEPTION_HANDLER_H
 #define EXCEPTION_HANDLER_H
 
 class ExceptionHandler {
-private:
-public:
-    bool handleError(const vector <string>& messages, const string& question) {
-        for (const string& message : messages) {
-            cout << message << endl;
-        }
-        string answer;
-        cout << question;
-        cin >> answer;
-        if (cin.fail()) {
-            cin.clear();
-            cin.ignore(numeric_limits < streamsize > ::max());
-            return false;
-        }
-        if (answer == "Y" || answer == "y") {
-            return true;
-        }
-        else {
-            return false;
-        }
+ private:
+ public:
+  bool handleError(const vector<string>& messages, const string& question) {
+    for (const string& message : messages) {
+      cout << message << endl;
     }
-    void printInstructions(const vector <string>& instructions) {
-        for (const string& instruction : instructions) {
-            cout << instruction << endl;
-        }
+    string answer;
+    cout << question;
+    cin >> answer;
+    if (cin.fail()) {
+      cin.clear();
+      cin.ignore(numeric_limits<streamsize>::max());
+      return false;
     }
-    void printPlainError(const string& error) {
-        cout << error << endl;
+    if (answer == "Y" || answer == "y") {
+      return true;
+    } else {
+      return false;
     }
+  }
+  void printInstructions(const vector<string>& instructions) {
+    for (const string& instruction : instructions) {
+      cout << instruction << endl;
+    }
+  }
+  void printPlainError(const string& error) { cout << error << endl; }
 };
 
 #endif

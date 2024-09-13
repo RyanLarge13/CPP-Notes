@@ -2,12 +2,12 @@
 #define STATEMANAGER_H
 
 class StateManager {
-private:
-public:
-    // string getState() {
+ private:
+ public:
+  // string getState() {
 
-    // }
-    void setState(string state) {}
+  // }
+  void setState(string state) {}
 };
 
 #endif

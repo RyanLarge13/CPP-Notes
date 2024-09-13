@@ -1,0 +1,16 @@
+# .clang-format
+BasedOnStyle: LLVM
+IndentWidth: 4 # LLVM style uses 2 by default, but you can increase it to 4 if preferred
+ColumnLimit: 80 # Maximum characters per line, set to 0 to disable
+AllowShortFunctionsOnASingleLine: Empty
+BreakBeforeBraces: Allman # Puts braces on new lines
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignTrailingComments: true
+SpaceBeforeParens: ControlStatements
+SortIncludes: true
+PointerAlignment: Left
+ReflowComments: true
+IndentCaseLabels: true
+TabWidth: 4
+UseTab: Never # Forces using spaces for indentation

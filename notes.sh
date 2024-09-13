@@ -1,7 +1,7 @@
 #!bin/bash
 
 if command -v clang &>/bin/null; then
-    echo
+    echo clang++ -o bin/myProg src/main.cpp -lncurses -lcurl
 else
-    echo
+    echo "Please install clang"
 fi
