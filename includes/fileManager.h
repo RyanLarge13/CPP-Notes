@@ -29,17 +29,17 @@ const std::string HOME_DIR = std::getenv("HOME");
 #endif
 
 class FileManager {
- private:
- public:
+private:
+public:
   struct DirVectorData {
     string path;
     int nestedDirCt;
     int nestedFileCt;
-    DirVectorData(const string& p, int nd, int nf)
+    DirVectorData(const string &p, int nd, int nf)
         : path(p), nestedDirCt(nd), nestedFileCt(nf) {}
   };
 
-  bool isCorrectExt(const directory_entry& entry) {
+  bool isCorrectExt(const directory_entry &entry) {
     string extension = entry.path().extension().string();
     if (extension == ".wn") {
       return true;
@@ -47,10 +47,10 @@ class FileManager {
     return false;
   }
 
-  void closeFile(fstream* file) { file->close(); }
+  void closeFile(fstream *file) { file->close(); }
 
-  bool checkDirExists(const string& dirPath) {
-    if (exists(HOME_DIR + dirPath)) {
+  bool checkDirExists(const string &dirPath) {
+    if (exists(dirPath)) {
       return true;
     }
     return false;
@@ -60,11 +60,11 @@ class FileManager {
     vector<DirVectorData> dirs;
     vector<string> files;
     path currentPath = current_path();
-    for (const auto& entry : directory_iterator(currentPath)) {
+    for (const auto &entry : directory_iterator(currentPath)) {
       int nestedDirsCt = 0;
       int nestedFilesCt = 0;
       if (is_directory(entry.status())) {
-        for (const auto& item : directory_iterator(entry.path())) {
+        for (const auto &item : directory_iterator(entry.path())) {
           if (is_directory(item.status())) {
             nestedDirsCt++;
           }
@@ -87,7 +87,7 @@ class FileManager {
     return currentPath;
   }
 
-  bool navDir(const string& dirPath) {
+  bool navDir(const string &dirPath) {
     if (!checkDirExists(dirPath)) {
       cout << "Does not exist returning from change dir" << endl;
       return false;
@@ -97,16 +97,16 @@ class FileManager {
         cout << "Error changing dir " << strerror(errno) << endl;
         return false;
       }
-    } catch (filesystem_error& err) {
+    } catch (filesystem_error &err) {
       cout << "catch block err: " << err.what() << endl;
       return false;
     }
     return true;
   }
 
-  bool navigateDir(const string& dirPath) {
+  bool navigateDir(const string &dirPath) {
     string absolutePath = HOME_DIR + dirPath;
-    if (!checkDirExists(dirPath)) {
+    if (!checkDirExists(absolutePath)) {
       cout << "Does not exist returning from change dir" << endl;
       return false;
     }
@@ -115,15 +115,15 @@ class FileManager {
         cout << "Error changing dir " << strerror(errno) << endl;
         return false;
       }
-    } catch (filesystem_error& err) {
+    } catch (filesystem_error &err) {
       cout << "catch block err: " << err.what() << endl;
       return false;
     }
     return true;
   }
 
-  ifstream* checkExistingFile(const string& fileName) {
-    ifstream* file = new ifstream(fileName);
+  ifstream *checkExistingFile(const string &fileName) {
+    ifstream *file = new ifstream(fileName);
     if (!file->is_open()) {
       delete file;
       return nullptr;
@@ -131,8 +131,8 @@ class FileManager {
     return file;
   }
 
-  fstream* openFileReadWrite(const string& fileName) {
-    fstream* file = new fstream(fileName);
+  fstream *openFileReadWrite(const string &fileName) {
+    fstream *file = new fstream(fileName);
     if (!file->is_open()) {
       delete file;
       return nullptr;
@@ -140,19 +140,19 @@ class FileManager {
     return file;
   }
 
-  ofstream* writeFile(const vector<string>& rows, ofstream* file) {
+  ofstream *writeFile(const vector<string> &rows, ofstream *file) {
     if (!file || !file->is_open()) {
       delete file;
       return nullptr;
     }
-    for (const string& row : rows) {
+    for (const string &row : rows) {
       *file << row << "\n";
     }
     return file;
   }
 
-  ofstream* createNewFile(const string& fileName) {
-    ofstream* newFile = new ofstream(fileName);
+  ofstream *createNewFile(const string &fileName) {
+    ofstream *newFile = new ofstream(fileName);
     if (!newFile->is_open()) {
       delete newFile;
       return nullptr;
@@ -160,19 +160,19 @@ class FileManager {
     return newFile;
   }
 
-  bool createNewDir(const string& path) {
+  bool createNewDir(const string &path) {
     try {
       if (create_directory(HOME_DIR + path)) {
         return true;
       }
       return false;
-    } catch (filesystem_error& err) {
+    } catch (filesystem_error &err) {
       cout << endl << "sys err " << err.what() << endl;
       return false;
     }
   }
 
-  bool deleteFile(const string& fileName) {
+  bool deleteFile(const string &fileName) {
     if (fileName.empty()) {
       return false;
     } else {
