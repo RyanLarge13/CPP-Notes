@@ -104,6 +104,12 @@ public:
     return true;
   }
 
+  void navBack() {
+    path current = getCurrentPath();
+    path parent = current.parent_path();
+    current_path(parent);
+  }
+
   bool navigateDir(const string &dirPath) {
     string absolutePath = HOME_DIR + dirPath;
     if (!checkDirExists(absolutePath)) {

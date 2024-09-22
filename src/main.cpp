@@ -27,7 +27,7 @@ void printMenu();
 void printSettings();
 pair<vector<FileManager::DirVectorData>, vector<string>> dirInfo;
 vector<string> userInfo;
-string nestedPath = "";
+int nesting = 0;
 
 const vector<string> options = {"1. New Note",
                                 "2. Open Note",
@@ -258,33 +258,44 @@ void openNote() {
 }
 
 void openDir() {
-  system("clear");
-  if (dirInfo.first.size() < 1) {
+  if (dirInfo.first.size() < 1 && nesting == 0) {
     exceptionHandler.printPlainError("You have no folders. Create one!!");
     printMenu();
     return;
   }
   printDirs(true, 0);
   int selection = ioHandler.getInput<int>(
-      {{""}}, "Folder #: ", "Please provide a valid input");
+      {{"Navigate back with 999", "Select a folder index to navigate"}},
+      "Folder #: ", "Please provide a valid input");
   int foldersLength = dirInfo.first.size();
   if (selection < 0 || selection > foldersLength && selection != 999) {
-    exceptionHandler.printPlainError(
-        "Please select a valid folder to navigate to or type 999 to return to "
-        "menu");
+    exceptionHandler.printPlainError("Please select a valid folder to navigate "
+                                     "to or type 999 to navigate back");
   }
   if (selection == 999) {
-    system("clear");
-    printMenu();
-    return;
+    if (nesting > 0) {
+      system("clear");
+      fileManager.navBack();
+      const auto newDirData = fileManager.grabDirsAndFiles();
+      dirInfo = newDirData;
+      nesting--;
+      printMenu();
+      return;
+    }
+    if (nesting == 0) {
+      system("clear");
+      exceptionHandler.printPlainError("You are already home");
+      openDir();
+    }
   }
   string currentPath = fileManager.getCurrentPath();
   string folderString = dirInfo.first[selection].path;
   string newDirPath = currentPath + "/" + folderString;
   fileManager.navDir(newDirPath);
   const auto &newDirInfo = fileManager.grabDirsAndFiles();
+  nesting++;
   dirInfo = newDirInfo;
-  // system("clear");
+  system("clear");
   printMenu();
   return;
 }
@@ -335,6 +346,7 @@ void selectAction(int option) {
     createNewDir();
     break;
   case 4:
+    system("clear");
     openDir();
     break;
   case 5:
