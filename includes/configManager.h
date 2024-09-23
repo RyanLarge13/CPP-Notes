@@ -15,8 +15,8 @@ using namespace std;
 #define CONFIGMANAGER_H
 
 class ConfigManager {
- private:
-  void confirmPass(const string& password) {
+private:
+  void confirmPass(const string &password) {
     string confirmPassword = ioHandler.getInput<string>(
         {{"Confirm your password"}},
         "Confirm Password: ", "Please input valid characters");
@@ -42,14 +42,14 @@ class ConfigManager {
 
   bool changeLogin(string state) {
     vector<string> rows = getUserInfo(true);
-    fstream* file = fileManager.openFileReadWrite("config.yaml");
+    fstream *file = fileManager.openFileReadWrite("config.yaml");
     if (rows.empty() || !file) {
       exceptionHandler.printPlainError(
           "We could not log you in. Please try again");
       return false;
     }
     rows[0] = "logged_in: " + state;
-    for (const string& row : rows) {
+    for (const string &row : rows) {
       *file << row << "\n";
     }
     file->close();
@@ -161,9 +161,9 @@ class ConfigManager {
     return pin;
   };
 
-  bool initializeConfig(const string& username, const string& email,
-                        string password, int pin, const string& mainDir,
-                        ofstream* configFile) {
+  bool initializeConfig(const string &username, const string &email,
+                        string password, int pin, const string &mainDir,
+                        ofstream *configFile) {
     if (username.size() < 1 || email.size() < 1 || password.size() < 1 ||
         pin < 1000) {
       exceptionHandler.printPlainError(
@@ -180,8 +180,8 @@ class ConfigManager {
     return true;
   }
 
- public:
-  bool nameMainDir(const string& dirname) {
+public:
+  bool nameMainDir(const string &dirname) {
     bool newDirCreated = fileManager.createNewDir(dirname);
     if (!newDirCreated) {
       exceptionHandler.printPlainError(
@@ -193,7 +193,7 @@ class ConfigManager {
   }
 
   vector<string> getUserInfo(bool rawData) {
-    fstream* file = fileManager.openFileReadWrite("config.yaml");
+    fstream *file = fileManager.openFileReadWrite("config.yaml");
     string line;
     string value;
     vector<string> rows;
@@ -223,16 +223,16 @@ class ConfigManager {
     return rows;
   }
 
-  ifstream* checkForLocalConfigFile(const string& fileName) {
-    ifstream* fileExists = fileManager.checkExistingFile(fileName);
+  ifstream *checkForLocalConfigFile(const string &fileName) {
+    ifstream *fileExists = fileManager.checkExistingFile(fileName);
     if (!fileExists) {
       return nullptr;
     }
     return fileExists;
   }
 
-  ofstream* createConfigFile(const string& fileName) {
-    ofstream* newConfig = fileManager.createNewFile(fileName);
+  ofstream *createConfigFile(const string &fileName) {
+    ofstream *newConfig = fileManager.createNewFile(fileName);
     if (!newConfig) {
       delete newConfig;
       bool userInput = exceptionHandler.handleError(
@@ -283,7 +283,7 @@ class ConfigManager {
     return 1;
   }
 
-  void createAccount(ofstream* configFile) {
+  void createAccount(ofstream *configFile) {
     cout << "Let's create an account" << endl << "Welcome to CPP-Notes" << endl;
     string remoteAccount = ioHandler.getInput<string>(
         {{"This application is a sister application to Native Notes, and "
@@ -345,43 +345,70 @@ class ConfigManager {
     }
   }
 
-  void finishCreatingAccount(vector<string> accountInfo) {
-    size_t length = accountInfo.size();
+  void finishCreatingAccount(vector<string> &currentData) {
+    size_t length = currentData.size();
     if (length < 1) {
-      // createAccount();
+      ofstream *newConfig = createConfigFile("config.yaml");
+      createAccount(newConfig);
+      delete newConfig;
       return;
     }
-    if (length < 2) {
-      cout << "Your current username is " << accountInfo[0]
-           << ". Would you like to change it?";
-      createEmail();
+    if (length == 1) {
+      currentData.push_back(createUsername());
+      finishCreatingAccount(currentData);
     }
-    if (length < 3) {
-      if (accountInfo[1] == "no email") {
-        cout << "Your current username " << accountInfo[0]
-             << " and you currently do not have an email. Would you like to "
-                "change your username or email?";
-      } else {
-        cout << "Your current username " << accountInfo[0]
-             << ", and your current email is " << accountInfo[1];
+    if (length == 2) {
+      currentData.push_back(createEmail());
+      finishCreatingAccount(currentData);
+    }
+    if (length == 3) {
+      currentData.push_back(createPassword());
+      finishCreatingAccount(currentData);
+    }
+    if (length == 4) {
+      currentData.push_back(to_string(createPin()));
+      finishCreatingAccount(currentData);
+    }
+    if (length == 5) {
+      string mainDir = ioHandler.getInput<string>(
+          {{"\nWe will be storing all of your notes at the root of your system "
+            "in an accessible manner if you decide to manually update them."}},
+          "Main directory: ",
+          "Please provide a valid name for this new directory");
+      bool newMainDirCreated = nameMainDir("/" + mainDir);
+      if (!newMainDirCreated) {
+        // Handle case on failed directory creation
+        return;
       }
-      createPassword();
+      currentData.push_back(mainDir);
+      finishCreatingAccount(currentData);
     }
-    if (length < 4) {
-      if (accountInfo[1] == "no email") {
-        cout << "Your current username is " << accountInfo[0]
-             << ", you do not have an email set, and your current password has "
-                "been successfully set"
-             << endl
-             << "Would you like to change any of these values?";
-      } else {
-        cout << "Your current username is " << accountInfo[0]
-             << ", your current email is " << accountInfo[1]
-             << " and your current password has been successfully set" << endl
-             << "Would you like to change any of these values?";
+    if (length >= 6) {
+      ofstream *configFile = fileManager.createNewFile("config.yaml");
+      bool configInitialized =
+          initializeConfig(currentData[1], currentData[2], currentData[3],
+                           stoi(currentData[4]), currentData[5], configFile);
+      if (configInitialized) {
+        system("clear");
+        cout << "\nWe officially finished creating a new account for you. More "
+                "configuration can be done within your settings. Happy notes "
+                "taking!!!\n"
+             << endl;
+        return;
       }
-      createPin();
+      if (!configInitialized) {
+        exceptionHandler.printInstructions(
+            {{"Steps to take: "},
+             {"1. End this program and within your current directory type in "
+              "\"touch config.yaml\""},
+             {"2. Run a command to make sure that you have read write and "
+              "execution access within the directory \"chmod 777\""},
+             {"3. You are all set. Restart the application and try again"}});
+        return;
+      }
+      return;
     }
+    return;
   }
 
   void logout() {

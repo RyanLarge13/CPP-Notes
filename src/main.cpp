@@ -428,7 +428,9 @@ void checkForAccount() {
   if (config) {
     int accountEstablished = configManager.checkForExistingAccount();
     if (accountEstablished == 1) {
-      return;
+      vector<string> currentData = configManager.getUserInfo(false);
+      configManager.finishCreatingAccount(currentData);
+      checkForAccount();
     }
     if (accountEstablished == 0) {
       userInfo = configManager.getUserInfo(false);
