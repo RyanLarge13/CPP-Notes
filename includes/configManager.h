@@ -216,6 +216,23 @@ class ConfigManager {
  }
 
  public:
+
+ bool changeUsername() {
+  return true;
+ }
+
+ bool changePass() {
+  return true;
+ }
+
+ bool changePin() {
+  return true;
+ }
+
+ bool changeDir() {
+  return true;
+ }
+
  bool nameMainDir(const string &dirname) {
   bool newDirCreated = fileManager.createNewDir(dirname);
   if (!newDirCreated) {

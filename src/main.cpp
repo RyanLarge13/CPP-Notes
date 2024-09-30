@@ -30,6 +30,13 @@ vector < string > userInfo;
 int nesting = 0;
 string title = "HOME";
 
+enum class SettingsOptions : int {
+ USERNAME = 1,
+ PASSWORD = 2,
+ PIN = 3,
+ DIR = 4
+};
+
 const vector < string > options = {
  "1. New Note",
  "2. Open Note",
@@ -326,10 +333,50 @@ void openDir() {
  return;
 }
 
+void updateProfile() {
+ vector < string > updateOptions = {
+  "1. Change username",
+  "2. Change password",
+  "3. Change pin",
+  "4. Set main directory"
+ };
+ for (const string& option: updateOptions) {
+  cout << option << endl;
+ }
+ cout << endl;
+ int optionPicked = ioHandler.getInput < int > ({{
+  ""
+ }}, "Select your option: ", "Please provide a valid option to 1 - 4");
+ if (optionPicked < 1 || optionPicked > 4) {
+  system("clear");
+  cout << "Please provide a valid option 1 - 4" << endl;
+  updateProfile();
+ }
+ switch (optionPicked) {
+  case SettingsOptions::USERNAME:
+  configManager.changeUsername();
+  printMenu();
+  break;
+  case SettingsOptions::PASSWORD:
+  configManager.changePass();
+  printMenu();
+  break;
+  case SettingsOptions::PIN:
+  configManager.changePin();
+  printMenu();
+  break;
+  case SettingsOptions::DIR:
+  configManager.changeDir();
+  printMenu();
+  break;
+ }
+}
+
 void selectSettingsAction(int option) {
  switch (option) {
   case 1:
-  // Update profile
+  system("clear");
+  updateProfile();
   break;
   case 2:
   system("clear");
