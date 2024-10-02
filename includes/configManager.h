@@ -215,7 +215,7 @@ class ConfigManager {
   return true;
  }
 
- string getNewUsername() {
+ string getNewUsername(const string& currentUsername) {
   const string newUsername = ioHandler.getInput < string > ({{
    ""
   }}, "\nNew username: ", "Please provide a valid new username");
@@ -248,7 +248,7 @@ class ConfigManager {
 
  public:
  bool changeUsername(vector < string>& userInfo) {
-  cout << "Okay, let's change your username" << endl;
+  cout << "Okay, let's change your username. To exit, simply type your current username when asked to give a new one" << endl;
   // If online account connected. Also change remote username.
   string currentUsername = userInfo[1];
   const string confirmName = ioHandler.getInput < string > ({{
@@ -262,7 +262,7 @@ class ConfigManager {
   userInfo[1] = newName;
   bool didUpdate = updateConfig(userInfo);
   if (!didUpdate) {
-   // log failure of config file update
+   cout << "We could not update your local configuration.. We are terribly sorry. Try changing your username again." << endl;
   }
   return didUpdate;
  }
