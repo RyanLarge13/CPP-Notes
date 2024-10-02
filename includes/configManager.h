@@ -215,10 +215,56 @@ class ConfigManager {
   return true;
  }
 
- public:
+ string getNewUsername() {
+  const string newUsername = ioHandler.getInput < string > ({{
+   ""
+  }}, "\nNew username: ", "Please provide a valid new username");
+  const string confirmNewName = ioHandler.getInput < string > ({{
+   ""
+  }}, "Confirm your new username: ", "Please provide a valid confirmation");
+  if (confirmNewName != newUsername) {
+   cout << "Please try again" << endl;
+   return getNewUsername();
+  }
+  return newUsername;
+ }
 
- bool changeUsername() {
+ bool updateConfig(const vector < string>& userInfo) {
+  fstream* config = fileManager.openFileReadWrite("config.yaml");
+  if (!config) {
+   delete config;
+   return false;
+  }
+  *config << "logged_in: " << "true" << "\n";
+  *config << "username: " << userInfo[1] << "\n";
+  *config << "email: " << userInfo[2] << "\n";
+  *config << "password: " << userInfo[3] << "\n";
+  *config << "pin: " << userInfo[4] << "\n";
+  *config << "maindir: " << "/" + userInfo[5] << "\n";
+  config->close();
   return true;
+ }
+
+
+ public:
+ bool changeUsername(vector < string>& userInfo) {
+  cout << "Okay, let's change your username" << endl;
+  // If online account connected. Also change remote username.
+  string currentUsername = userInfo[1];
+  const string confirmName = ioHandler.getInput < string > ({{
+   ""
+  }}, "Confirm current username: ", "Please input a valid username");
+  if (currentUsername != confirmName) {
+   cout << "Try again" << endl << endl;
+   return changeUsername(userInfo);
+  }
+  string newName = getNewUsername();
+  userInfo[1] = newName;
+  bool didUpdate = updateConfig(userInfo);
+  if (!didUpdate) {
+   // log failure of config file update
+  }
+  return didUpdate;
  }
 
  bool changePass() {

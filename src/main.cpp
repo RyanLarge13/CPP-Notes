@@ -30,7 +30,7 @@ vector < string > userInfo;
 int nesting = 0;
 string title = "HOME";
 
-enum class SettingsOptions : int {
+enum SettingsOptions: int {
  USERNAME = 1,
  PASSWORD = 2,
  PIN = 3,
@@ -354,7 +354,8 @@ void updateProfile() {
  }
  switch (optionPicked) {
   case SettingsOptions::USERNAME:
-  configManager.changeUsername();
+  system("clear");
+  configManager.changeUsername(userInfo);
   printMenu();
   break;
   case SettingsOptions::PASSWORD:
