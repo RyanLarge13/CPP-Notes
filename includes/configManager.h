@@ -362,7 +362,8 @@ public:
           "Please provide a valid response");
       if (confirmNewDirName == "Y" || confirmNewDirName == "y") {
         cout << "Sounds good" << endl;
-        const bool didUpdateDir = fileManager.renameDir(userInfo[5]);
+        const bool didUpdateDir =
+            fileManager.renameDir(userInfo[5], newDirName);
         if (didUpdateDir) {
           userInfo[5] = newDirName;
           const bool didUpdateConfig = updateConfig(userInfo);

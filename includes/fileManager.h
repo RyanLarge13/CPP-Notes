@@ -192,7 +192,23 @@ public:
     }
   }
 
-  bool renameDir(const string &dirname) { return false; }
+  bool renameDir(const string &dirname, const string &newDirname) {
+    bool didNavigate = navigateDir("");
+    if (!didNavigate) {
+      return false;
+    }
+    try {
+      rename(dirname)
+    } catch (const filesystem_error &e) {
+      cout << e.what() << endl;
+      return false
+    }
+    bool didNavBack = navigateDir(newDirName);
+    if (!didNavBack) {
+      return false;
+    }
+    return true;
+  }
 
   bool deleteFile(const string &fileName) {
     if (fileName.empty()) {
