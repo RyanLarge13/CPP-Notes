@@ -2,8 +2,8 @@
 #define STATEMANAGER_H
 
 class StateManager {
- private:
- public:
+private:
+public:
   // string getState() {
 
   // }

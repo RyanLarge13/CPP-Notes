@@ -4,12 +4,12 @@
 using namespace std;
 
 class LocalAuth {
- private:
+private:
   bool compare() {}
   string encrypt(string hash) {}
   bool decrypt(string hash) {}
 
- public:
+public:
   bool checkPassword(string password) {
     string hash = "@$$#^WFREQr3jfoid9fenwqifiejq3@repogqwpjfwTKREQJKREW";
     bool passwordMatch = decrypt(password, hash);

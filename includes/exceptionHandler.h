@@ -8,10 +8,10 @@ using namespace std;
 #define EXCEPTION_HANDLER_H
 
 class ExceptionHandler {
- private:
- public:
-  bool handleError(const vector<string>& messages, const string& question) {
-    for (const string& message : messages) {
+private:
+public:
+  bool handleError(const vector<string> &messages, const string &question) {
+    for (const string &message : messages) {
       cout << message << endl;
     }
     string answer;
@@ -28,12 +28,12 @@ class ExceptionHandler {
       return false;
     }
   }
-  void printInstructions(const vector<string>& instructions) {
-    for (const string& instruction : instructions) {
+  void printInstructions(const vector<string> &instructions) {
+    for (const string &instruction : instructions) {
       cout << instruction << endl;
     }
   }
-  void printPlainError(const string& error) { cout << error << endl; }
+  void printPlainError(const string &error) { cout << error << endl; }
 };
 
 #endif

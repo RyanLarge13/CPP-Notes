@@ -5,14 +5,14 @@ using namespace std;
 #define IO_HAMDLER_H
 
 class IoHandler {
- private:
- public:
+private:
+public:
   template <typename T>
-  T getInput(const vector<string>& texts, const string& question,
-             const string& reply) {
+  T getInput(const vector<string> &texts, const string &question,
+             const string &reply) {
     bool input = true;
     T answer;
-    for (const string& text : texts) {
+    for (const string &text : texts) {
       cout << text << endl;
     }
     cout << question;

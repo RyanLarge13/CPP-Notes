@@ -49,8 +49,6 @@ public:
     return false;
   }
 
-  void closeFile(fstream *file) { file->close(); }
-
   bool checkDirExists(const string &dirPath) {
     if (exists(dirPath)) {
       return true;
@@ -198,7 +196,7 @@ public:
       return false;
     }
     try {
-      rename(dirname)
+      rename(dirname);
     } catch (const filesystem_error &e) {
       cout << e.what() << endl;
       return false

@@ -11,12 +11,12 @@ using namespace std;
 #ifndef HTTP_HANDLER_H
 #define HTTP_HANDLER_H
 class HttpHandler {
- private:
- public:
-  bool saveNote(const string& note, const string& title, const int& folderId,
-                const bool& locked, const string& url) {
+private:
+public:
+  bool saveNote(const string &note, const string &title, const int &folderId,
+                const bool &locked, const string &url) {
     string lockedString = locked ? "true" : "false";
-    CURL* curl;
+    CURL *curl;
     CURLcode res;
     // global init will need to happen in the constructor
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -24,7 +24,7 @@ class HttpHandler {
     // global init will need to happen in the constructor
     curl = curl_easy_init();
     if (curl) {
-      struct curl_slist* headers = NULL;
+      struct curl_slist *headers = NULL;
       headers = curl_slist_append(headers, "Content-Type: application/json");
       string jsonData = "{\"htmlNotes\": \"" + note + "\", \"title\": \"" +
                         title + ", \"folderId\": " + to_string(folderId) +

@@ -13,6 +13,7 @@
 #include "../includes/httpHandler.h"
 #include "../includes/ioHandler.h"
 #include "../includes/stateManager.h"
+#include "../includes/validator.h"
 
 using namespace std;
 namespace fs = filesystem;
@@ -22,6 +23,7 @@ ConfigManager configManager;
 StateManager stateManager;
 ExceptionHandler exceptionHandler;
 IoHandler ioHandler;
+Validator validator;
 
 void printMenu();
 void printSettings();
@@ -31,6 +33,16 @@ int nesting = 0;
 string title = "HOME";
 
 enum SettingsOptions : int { USERNAME = 1, PASSWORD = 2, PIN = 3, DIR = 4 };
+enum Options : int {
+  NEW_NOTE,
+  OPEN_NOTE,
+  NEW_FOLDER,
+  OPEN_FOLDER,
+  SETTINGS,
+  LOGOUT,
+  QUIT,
+  DELETE_ACCOUNT
+};
 
 const vector<string> options = {"1. New Note",
                                 "2. Open Note",
@@ -43,13 +55,6 @@ const vector<string> options = {"1. New Note",
 
 const vector<string> settings = {"1. Update profile", "2. Create option",
                                  "3. Main menu", "4. Delete Account"};
-
-void createOption() {
-  string newOption =
-      ioHandler.getInput<string>({{""}}, "What is your new option name: ",
-                                 "Please provide a valid name with no spaces");
-  int optionIndex;
-}
 
 void printDirs(const bool &showIndex, const int &start) {
   int iterator = start;
@@ -352,13 +357,9 @@ void selectSettingsAction(int option) {
     break;
   case 2:
     system("clear");
-    createOption();
-    break;
-  case 3:
-    system("clear");
     printMenu();
     break;
-  case 4: {
+  case 3: {
     system("clear");
     string userInput = ioHandler.getInput<string>(
         {{"Once your account is deleted, your account will be lost forever"}},
@@ -380,29 +381,29 @@ void selectSettingsAction(int option) {
 
 void selectAction(int option) {
   switch (option) {
-  case 1:
+  case Options::NEW_NOTE:
     system("clear");
     createNewFile();
     break;
-  case 2:
+  case Options::OPEN_NOTE:
     openNote();
     break;
-  case 3:
+  case Options::NEW_FOLDER:
     createNewDir();
     break;
-  case 4:
+  case Options::OPEN_FOLDER:
     system("clear");
     openDir();
     break;
-  case 5:
+  case Options::SETTINGS:
     system("clear");
     printSettings();
     break;
-  case 6:
+  case Options::LOGOUT:
     system("clear");
     configManager.logout();
     break;
-  case 7:
+  case Options::QUIT:
     system("clear");
     break;
   default:
