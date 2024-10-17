@@ -39,25 +39,42 @@ enum SettingsOptions: int {
  DIR = 4
 };
 enum Options: int {
- NEW_NOTE = 1,
- OPEN_NOTE,
- NEW_FOLDER,
- OPEN_FOLDER,
+ NOTES = 1,
+ FOLDERS,
  SETTINGS,
  LOGOUT,
  QUIT,
  DELETE_ACCOUNT
 };
+enum NoteFolderOptions: int {
+ OPEN = 1,
+ CREATE,
+ DELETE,
+ COPY,
+ MOVE,
+ PULL,
+ PUSH,
+ SYNC
+};
 
 const vector < string > options = {
- "1. New Note",
- "2. Open Note",
- "3. New Folder",
- "4. Open Folder",
+ "1. Notes",
+ "2. Folders",
  "5. Settings",
  "6. Logout",
  "7. Quit (stay logged in)",
  "8. Delete Account"
+};
+
+const vector < string > noteFolderOptions = {
+ "1. Open",
+ "2. Create",
+ "3. Delete",
+ "4. Copy",
+ "5. Move",
+ "6. Pull",
+ "7. Push",
+ "8. Sync"
 };
 
 const vector < string > settings = {
@@ -414,21 +431,154 @@ void selectSettingsAction(int option) {
  }
 }
 
-void selectAction(int option) {
- switch (option) {
-  case Options::NEW_NOTE:
+void deleteFile() {
+ printFiles(false, 0);
+ int answer = ioHandler.getInput < int > ({
+  ""
+ }, "Which file: ", "Please provide a valid response");
+ // Check for out of bounds
+}
+
+void copyFile() {}
+
+void renameFile() {}
+
+void syncFile() {}
+
+void pushFile() {}
+
+void pullFile() {}
+
+void moveFile() {}
+
+void deleteDir() {}
+
+void copyDir() {}
+
+void renameDur() {}
+
+void syncDir() {}
+
+void pushDir() {}
+
+void pullDir() {}
+
+void moveDir() {}
+
+void printFolderOptions() {
+ for (const string& option: noteFolderOptions) {
+  cout << option << endl;
+ }
+ cout << endl;
+ printDirs(false, 0);
+ int choice = ioHandler.getInput < int > ({
+  ""
+ }, "Option: ", "Please enter a valid response");
+ if (choice < 1 || choice > 8) {
+  system("clear");
+  cout << "Choose an option between" + RED + "1 & 8" + ENDCOLOR << endl;
+  printFolderOptions();
+ }
+ switch (choice) {
+  case NoteFolderOptions::OPEN:
+  openDir();
+  break;
+  case NoteFolderOptions::CREATE:
+  system("clear");
+  createNewDir();
+  break;
+  case NoteFolderOptions::DELETE:
+  system("clear");
+  deleteDir();
+  break;
+  case NoteFolderOptions::COPY:
+  system("clear");
+  copyDir();
+  break;
+  case NoteFolderOptions::MOVE:
+  system("clear");
+  moveDir();
+  break;
+  case NoteFolderOptions::PUSH:
+  system("clear");
+  pushDir();
+  break;
+  case NoteFolderOptions::PULL:
+  system("clear");
+  pullDir();
+  break;
+  case NoteFolderOptions::SYNC:
+  system("clear");
+  syncDir();
+  break;
+  default:
+  system("clear");
+  printMenu();
+  break;
+ }
+}
+
+void printNotesOptions() {
+ for (const string& option: noteFolderOptions) {
+  cout << option << endl;
+ }
+ cout << endl;
+ printFiles(false, 0);
+ int choice = ioHandler.getInput < int > ({
+  ""
+ }, "Option: ", "Please enter a valid response");
+ if (choice < 1 || choice > 8) {
+  system("clear");
+  cout << "Choose an option between" + RED + "1 & 8" + ENDCOLOR << endl;
+  printNotesOptions();
+ }
+ switch (choice) {
+  case NoteFolderOptions::OPEN:
+  openNote();
+  break;
+  case NoteFolderOptions::CREATE:
   system("clear");
   createNewFile();
   break;
-  case Options::OPEN_NOTE:
-  openNote();
-  break;
-  case Options::NEW_FOLDER:
-  createNewDir();
-  break;
-  case Options::OPEN_FOLDER:
+  case NoteFolderOptions::DELETE:
   system("clear");
-  openDir();
+  deleteFile();
+  break;
+  case NoteFolderOptions::COPY:
+  system("clear");
+  copyFile();
+  break;
+  case NoteFolderOptions::MOVE:
+  system("clear");
+  moveFile();
+  break;
+  case NoteFolderOptions::PUSH:
+  system("clear");
+  pushFile();
+  break;
+  case NoteFolderOptions::PULL:
+  system("clear");
+  pullFile();
+  break;
+  case NoteFolderOptions::SYNC:
+  system("clear");
+  syncFile();
+  break;
+  default:
+  system("clear");
+  printMenu();
+  break;
+ }
+}
+
+void selectAction(int option) {
+ switch (option) {
+  case Options::NOTES:
+  system("clear");
+  printNotesOptions();
+  break;
+  case Options::FOLDERS:
+  printFolderOptions();
   break;
   case Options::SETTINGS:
   system("clear");
