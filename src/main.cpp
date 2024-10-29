@@ -26,6 +26,8 @@ IoHandler ioHandler;
 Validator validator;
 
 void printMenu();
+void printNotesOptions();
+void printFolderOptions();
 void printSettings();
 pair < vector < FileManager::DirVectorData >, vector < string>> dirInfo;
 vector < string > userInfo;
@@ -54,7 +56,8 @@ enum NoteFolderOptions: int {
  MOVE,
  PULL,
  PUSH,
- SYNC
+ SYNC, 
+ BACK = 999
 };
 
 const vector < string > options = {
@@ -432,6 +435,11 @@ void selectSettingsAction(int option) {
 }
 
 void deleteFile() {
+ if (dirInfo.second.size() < 1) {
+  exceptionHandler.printPlainError(RED+ "You have no files to delete within this directory.\n" + ENDCOLOR);
+  printNotesOptions();
+  return;
+ }
  printFiles(false, 0);
  int answer = ioHandler.getInput < int > ({
   ""
@@ -578,6 +586,7 @@ void selectAction(int option) {
   printNotesOptions();
   break;
   case Options::FOLDERS:
+  system("clear");
   printFolderOptions();
   break;
   case Options::SETTINGS:
