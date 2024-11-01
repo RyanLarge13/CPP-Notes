@@ -225,6 +225,13 @@ class FileManager {
   }
  }
 
+ bool deleteDir(const string& dirname) {
+  if (dirname.empty()) {
+   return false;
+  }
+return true;
+ }
+
  void updateFileWeb() {}
  void deleteFileWeb() {}
  void createFileWeb() {}

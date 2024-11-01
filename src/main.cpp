@@ -56,7 +56,7 @@ enum NoteFolderOptions: int {
  MOVE,
  PULL,
  PUSH,
- SYNC, 
+ SYNC,
  BACK = 999
 };
 
@@ -459,7 +459,26 @@ void pullFile() {}
 
 void moveFile() {}
 
-void deleteDir() {}
+void deleteDir() {
+ int dirToDelete = ioHandler.getInput < int > ({
+  ""
+ }, "Folder#: ", "Please type in a valid folder number to remove");
+ vector::string dirs = dirInfo.first;
+ if (dirToDelete > dirs.size() || dirToDelete < 1) {
+  exceptionHandler.printPlainError("Please provide a valid selection in the list of directories available by number");
+  printFolderOptions();
+  return;
+ }
+ string dirname = dirs[dirToDelete].path;
+ bool didDel = fileManager.deleteDir(dirname);
+ if (!didDel) {
+  string errStr = "We encountered an issue deleting folder " + dirname + " \n please confirm you have the correct permissions set, and the directory exists. You can always manually go into " + dirname + " to delete the folder";
+  exceptionHandler.printPlainError(errStr);
+ }
+ cout << "\nSuccessfully deleted " << dirname << "." << "\n";
+ printFolderOptions();
+ return;
+}
 
 void copyDir() {}
 
