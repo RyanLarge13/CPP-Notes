@@ -1,6 +1,6 @@
 # .clang-format
 BasedOnStyle: LLVM
-IndentWidth: 4 # LLVM style uses 2 by default, but you can increase it to 4 if preferred
+IndentWidth: 2 # LLVM style uses 2 by default, but you can increase it to 4 if preferred
 ColumnLimit: 80 # Maximum characters per line, set to 0 to disable
 AllowShortFunctionsOnASingleLine: Empty
 BreakBeforeBraces: Allman # Puts braces on new lines
