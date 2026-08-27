@@ -640,6 +640,7 @@ void printMenu() {
 void checkForAccount() {
   ifstream *config = configManager.checkForLocalConfigFile(
       fileManager.HOME_DIR + "/" + "config.yaml");
+
   if (!config) {
     delete config;
     ofstream *newConfig = configManager.createConfigFile(fileManager.HOME_DIR +
@@ -652,9 +653,20 @@ void checkForAccount() {
     newConfig->close();
     delete newConfig;
     checkForAccount();
+    return;
   }
+
+  // User most likely already exists or has previously used the application
   if (config) {
     int accountEstablished = configManager.checkForExistingAccount();
+
+    if (accountEstablished == 3) {
+      config->close();
+      delete config;
+      return;
+    }
+
+    // Account has not been finished setting up
     if (accountEstablished == 1) {
       vector<string> currentData = configManager.getUserInfo(false);
       configManager.finishCreatingAccount(currentData);
@@ -662,6 +674,8 @@ void checkForAccount() {
       delete config;
       checkForAccount();
     }
+
+    // Account is established and has finished setup. Continue to login
     if (accountEstablished == 0) {
       userInfo = configManager.getUserInfo(false);
       if (!fileManager.navigateDir(userInfo[5])) {
@@ -676,6 +690,8 @@ void checkForAccount() {
       dirInfo = info;
       config->close();
       delete config;
+
+      // After clean up print menu and user is logged in
       printMenu();
     }
   }

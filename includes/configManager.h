@@ -537,33 +537,43 @@ public:
     return newConfig;
   }
 
+  // Checking if account is fully updated and complete and exists
+  // returning 1 means incomplete account. 0 means complete and logged in. 3 means exit app
   int checkForExistingAccount() {
     bool confirmed = false;
     vector<string> rows = getUserInfo(false);
+
     if (rows.size() == 0) {
       return 1;
     }
+
     if (rows.size() < 6) {
-      exceptionHandler.handleError(
+      bool userPicksUpWhereLeftOff = exceptionHandler.handleError(
           {{"it looks like you have started creating an account but never "
             "finished."}},
           "Would you like to continue where you left off? (Y/n): ");
+
+      if (userPicksUpWhereLeftOff) {
+        return 1;
+      } else {
+        return 3;
+      }
     }
-    if (rows.size() == 6) {
+
+    if (rows.size() >= 6) {
       string loggedInLine = rows[0];
-      if (loggedInLine == "true") {
+      if (loggedInLine == "true" || loggedInLine == true) {
         return 0;
       }
-      if (loggedInLine == "false") {
+      if (loggedInLine == "false" || loggedInLine == false) {
         system("clear");
-        bool loginSuccess = login();
-        if (loginSuccess) {
-          return 0;
-        } else {
-          return 1;
-        }
+        login();
+
+        // Returning 0 to caller from main.cpp prints menu. Only a successful login returns 
+        return 0;
       }
     }
+
     return 1;
   }
 
