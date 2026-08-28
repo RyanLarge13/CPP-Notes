@@ -14,25 +14,30 @@ public:
     for (const string &message : messages) {
       cout << message << endl;
     }
+		
     string answer;
     cout << question;
     cin >> answer;
+		
     if (cin.fail()) {
       cin.clear();
       cin.ignore(numeric_limits<streamsize>::max());
       return false;
     }
+		
     if (answer == "Y" || answer == "y") {
       return true;
     } else {
       return false;
     }
   }
+	
   void printInstructions(const vector<string> &instructions) {
     for (const string &instruction : instructions) {
       cout << instruction << endl;
     }
   }
+	
   void printPlainError(const string &error) { cout << error << endl; }
 };
 

@@ -562,10 +562,10 @@ public:
 
     if (rows.size() >= 6) {
       string loggedInLine = rows[0];
-      if (loggedInLine == "true" || loggedInLine == true) {
+      if (loggedInLine == "true") {
         return 0;
       }
-      if (loggedInLine == "false" || loggedInLine == false) {
+      if (loggedInLine == "false") {
         system("clear");
         login();
 
@@ -593,14 +593,6 @@ public:
             "finish creating your account and you can play with your "
             "settings and account info later"
          << endl;
-
-    cout << endl
-         << "Okay, no problem let's create a new username, email, "
-            "password "
-            "and a new pin incase you want to lock your notes."
-         << endl;
-
-    cout << "We can create an online account later if you want to" << endl;
 
     string newName = createUsername();
     string newEmail = createEmail();
@@ -670,8 +662,8 @@ public:
           {{"\nWe will be storing all of your notes at the root of your "
             "system "
             "in an accessible manner if you decide to manually update "
-            "them."}},
-          "Main directory: ",
+            "them. Choose a folder name to store your notes in."}},
+          "Folder name: ",
           "Please provide a valid name for this new directory");
       bool newMainDirCreated = nameMainDir("/" + mainDir);
       if (!newMainDirCreated) {
