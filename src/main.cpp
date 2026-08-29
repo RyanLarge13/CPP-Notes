@@ -71,13 +71,13 @@ const vector<string> noteFolderOptions = {"1. Open", "2. Create", "3. Delete",
 const vector<string> settings = {"1. Update profile", "2. Create option",
                                  "3. Main menu", "4. Delete Account"};
 
-void printDirs(const bool &showIndex, const int &start) {
+void printDirs(const bool& showIndex, const int& start) {
   int iterator = start;
-  auto &dirs = dirInfo.first;
+  auto& dirs = dirInfo.first;
   if (dirs.size() < 1) {
     return;
   }
-  for (const auto &dir : dirs) {
+  for (const auto& dir : dirs) {
     if (showIndex) {
       cout << BLUE + "#" + to_string(iterator) + ENDCOLOR << " ";
       iterator++;
@@ -89,13 +89,13 @@ void printDirs(const bool &showIndex, const int &start) {
   cout << endl;
 }
 
-void printFiles(const bool &showIndex, const int &start) {
+void printFiles(const bool& showIndex, const int& start) {
   int iterator = start;
-  auto &files = dirInfo.second;
+  auto& files = dirInfo.second;
   if (files.size() < 1) {
     return;
   }
-  for (const auto &file : files) {
+  for (const auto& file : files) {
     if (showIndex) {
       cout << PURPLE + "#" + to_string(iterator) + ENDCOLOR << " ";
       iterator++;
@@ -105,7 +105,7 @@ void printFiles(const bool &showIndex, const int &start) {
   cout << endl;
 }
 
-void openEditor(fstream *newFile, const string &fileName) {
+void openEditor(fstream* newFile, const string& fileName) {
   initscr();
   raw();
   keypad(stdscr, TRUE);
@@ -118,103 +118,12 @@ void openEditor(fstream *newFile, const string &fileName) {
   move(1, 0);
   while ((ch = getch()) != 27) {
     switch (ch) {
-    case KEY_BACKSPACE:
-    case 127: {
-      if (!text.empty()) {
-        text.pop_back();
-        getyx(stdscr, y, x);
-        if (x > 0)
-          x--;
-        if (y > 1) {
-          y--;
-          x = getmaxx(stdscr) - 1;
-        }
-        mvdelch(y, x);
-        refresh();
-      }
-    } break;
-    case '\n':
-      text += "\n";
-      getyx(stdscr, y, x);
-      move(y + 1, 0);
-      refresh();
-      break;
-    default:
-      text += ch;
-      addch(ch);
-      refresh();
-      break;
-    }
-  }
-  endwin();
-  *newFile << text;
-  newFile->close();
-  delete newFile;
-  updateDirInfo();
-  cout << "Your new note " << fileName << " was successfully saved" << endl;
-  printMenu();
-}
-
-void createNewFile() {
-  string fileName = ioHandler.getInput<string>(
-      {{"Give your new note a name"}},
-      "New name: ", "Please provide the file with a valid name");
-  fstream *newFile = fileManager.createFile(fileName + ".wn");
-  if (!newFile) {
-    exceptionHandler.printPlainError(
-        "Please make sure you have the necessary read write permissions set to "
-        "your main directory" +
-        userInfo[6] + "We could not create your new note");
-    delete newFile;
-    printMenu();
-  }
-
-  openEditor(newFile, fileName);
-}
-
-void createNewDir() {
-  string newDirName = ioHandler.getInput<string>(
-      {{"Give your new folder a name"}},
-      "New folder: ", "Please provide a valid directory name");
-  // grab all available directories the user can select from to save the new
-  // directory in
-  bool dirCreated = fileManager.createNewDir(userInfo[5] + "/" + newDirName);
-  if (!dirCreated) {
-    exceptionHandler.printPlainError(
-        "We could not create your new folder. Please make sure you have the "
-        "correct access rights set in your main directory " +
-        userInfo[6]);
-    printMenu();
-    return;
-  }
-  const auto &newDirInfo = fileManager.grabDirsAndFiles();
-  dirInfo = newDirInfo;
-  system("clear");
-  cout << "New folder " << newDirName << " created" << endl;
-  printMenu();
-}
-
-void initializeTextEditor(const string &text) {
-  if (text.empty()) {
-    initscr();
-    raw();
-    keypad(stdscr, TRUE);
-    noecho();
-    int ch;
-    int x;
-    int y;
-    string text;
-    // printw(fileName + "\n\n");
-    move(1, 0);
-    while ((ch = getch()) != 27) {
-      switch (ch) {
       case KEY_BACKSPACE:
       case 127: {
         if (!text.empty()) {
           text.pop_back();
           getyx(stdscr, y, x);
-          if (x > 0)
-            x--;
+          if (x > 0) x--;
           if (y > 1) {
             y--;
             x = getmaxx(stdscr) - 1;
@@ -234,6 +143,98 @@ void initializeTextEditor(const string &text) {
         addch(ch);
         refresh();
         break;
+    }
+  }
+  endwin();
+  *newFile << text;
+  newFile->close();
+  delete newFile;
+  updateDirInfo();
+  cout << "Your new note " << fileName << " was successfully saved" << endl;
+  printMenu();
+}
+
+void createNewFile() {
+  string fileName = ioHandler.getInput<string>(
+      {{"Give your new note a name"}},
+      "New name: ", "Please provide the file with a valid name");
+
+  fstream* newFile = fileManager.createFile(fileName + ".wn");
+
+  if (!newFile) {
+    exceptionHandler.printPlainError(
+        "Please make sure you have the necessary read write permissions set to "
+        "your main directory" +
+        userInfo[6] + "We could not create your new note");
+    delete newFile;
+    printMenu();
+  }
+
+  openEditor(newFile, fileName);
+}
+
+void createNewDir() {
+  string newDirName = ioHandler.getInput<string>(
+      {{"Give your new folder a name"}},
+      "New folder: ", "Please provide a valid directory name");
+  // grab all available directories the user can select from to save the new
+  // directory in
+  bool dirCreated = fileManager.createNewDirCustom(newDirName);
+
+  if (!dirCreated) {
+    exceptionHandler.printPlainError(
+        "We could not create your new folder. Please make sure you have the "
+        "correct access rights set in your main directory " +
+        userInfo[6]);
+    printMenu();
+    return;
+  }
+  const auto& newDirInfo = fileManager.grabDirsAndFiles();
+  dirInfo = newDirInfo;
+  system("clear");
+  cout << "New folder " << newDirName << " created" << endl;
+  printMenu();
+}
+
+void initializeTextEditor(const string& text) {
+  if (text.empty()) {
+    initscr();
+    raw();
+    keypad(stdscr, TRUE);
+    noecho();
+    int ch;
+    int x;
+    int y;
+    string text;
+    // printw(fileName + "\n\n");
+    move(1, 0);
+    while ((ch = getch()) != 27) {
+      switch (ch) {
+        case KEY_BACKSPACE:
+        case 127: {
+          if (!text.empty()) {
+            text.pop_back();
+            getyx(stdscr, y, x);
+            if (x > 0) x--;
+            if (y > 1) {
+              y--;
+              x = getmaxx(stdscr) - 1;
+            }
+            mvdelch(y, x);
+            refresh();
+          }
+        } break;
+        case '\n':
+          text += "\n";
+          getyx(stdscr, y, x);
+          move(y + 1, 0);
+          refresh();
+          break;
+        default:
+          text += ch;
+          addch(ch);
+          refresh();
+          break;
       }
     }
     endwin();
@@ -256,7 +257,7 @@ void openNote() {
         "menu");
   }
   string fileStr = dirInfo.second[selection];
-  fstream *note = fileManager.openFileReadWrite(fileStr);
+  fstream* note = fileManager.openFileReadWrite(fileStr);
   if (!note) {
     exceptionHandler.printPlainError(
         "We could not open your note. Please make sure you have permissions "
@@ -283,7 +284,7 @@ void openNote() {
 }
 
 void updateDirInfo() {
-  const auto &newDirData = fileManager.grabDirsAndFiles();
+  const auto& newDirData = fileManager.grabDirsAndFiles();
   dirInfo = newDirData;
 }
 
@@ -299,8 +300,9 @@ void openDir() {
       "Folder #: ", "Please provide a valid input");
   int foldersLength = dirInfo.first.size();
   if (selection < 0 || selection > foldersLength && selection != 999) {
-    exceptionHandler.printPlainError("Please select a valid folder to navigate "
-                                     "to or type 999 to navigate back");
+    exceptionHandler.printPlainError(
+        "Please select a valid folder to navigate "
+        "to or type 999 to navigate back");
   }
   if (selection == 999) {
     if (nesting > 0) {
@@ -326,7 +328,7 @@ void openDir() {
   string folderString = dirInfo.first[selection].path;
   string newDirPath = currentPath + "/" + folderString;
   fileManager.navDir(newDirPath);
-  const auto &newDirInfo = fileManager.grabDirsAndFiles();
+  const auto& newDirInfo = fileManager.grabDirsAndFiles();
   nesting++;
   title = folderString;
   dirInfo = newDirInfo;
@@ -338,7 +340,7 @@ void openDir() {
 void updateProfile() {
   vector<string> updateOptions = {"1. Change username", "2. Change password",
                                   "3. Change pin", "4. Set main directory"};
-  for (const string &option : updateOptions) {
+  for (const string& option : updateOptions) {
     cout << option << endl;
   }
   cout << endl;
@@ -350,57 +352,57 @@ void updateProfile() {
     updateProfile();
   }
   switch (optionPicked) {
-  case SettingsOptions::USERNAME:
-    system("clear");
-    configManager.changeUsername(userInfo);
-    printMenu();
-    break;
-  case SettingsOptions::PASSWORD:
-    configManager.changePass(userInfo);
-    printMenu();
-    break;
-  case SettingsOptions::PIN:
-    configManager.changePin(userInfo);
-    printMenu();
-    break;
-  case SettingsOptions::DIR:
-    configManager.changeDir(userInfo);
-    printMenu();
-    break;
+    case SettingsOptions::USERNAME:
+      system("clear");
+      configManager.changeUsername(userInfo);
+      printMenu();
+      break;
+    case SettingsOptions::PASSWORD:
+      configManager.changePass(userInfo);
+      printMenu();
+      break;
+    case SettingsOptions::PIN:
+      configManager.changePin(userInfo);
+      printMenu();
+      break;
+    case SettingsOptions::DIR:
+      configManager.changeDir(userInfo);
+      printMenu();
+      break;
   }
 }
 
 void selectSettingsAction(int option) {
   switch (option) {
-  case 1:
-    system("clear");
-    updateProfile();
-    break;
-  case 2:
-    system("clear");
-    printMenu();
-    break;
-  case 3: {
-    system("clear");
-    printMenu();
-  } break;
-  case 4: {
-    system("clear");
-    string userInput = ioHandler.getInput<string>(
-        {{"Once your account is deleted, your account will be lost forever"}},
-        "Are you sure you want to delete your account? (Y/n) ",
-        "Please select 'Y' for yes or 'n' for no");
-    if (userInput == "Y" || userInput == "y") {
-      configManager.deleteAccount();
+    case 1:
       system("clear");
-      cout << "Account deleted successfully" << endl;
-    } else {
+      updateProfile();
+      break;
+    case 2:
       system("clear");
       printMenu();
-    }
-  } break;
-  default:
-    break;
+      break;
+    case 3: {
+      system("clear");
+      printMenu();
+    } break;
+    case 4: {
+      system("clear");
+      string userInput = ioHandler.getInput<string>(
+          {{"Once your account is deleted, your account will be lost forever"}},
+          "Are you sure you want to delete your account? (Y/n) ",
+          "Please select 'Y' for yes or 'n' for no");
+      if (userInput == "Y" || userInput == "y") {
+        configManager.deleteAccount();
+        system("clear");
+        cout << "Account deleted successfully" << endl;
+      } else {
+        system("clear");
+        printMenu();
+      }
+    } break;
+    default:
+      break;
   }
 }
 
@@ -415,7 +417,6 @@ void deleteFile() {
   printFiles(false, 0);
   int answer = ioHandler.getInput<int>(
       {""}, "Which file: ", "Please provide a valid response");
-  // Check for out of bounds
 }
 
 void copyFile() {}
@@ -431,17 +432,24 @@ void pullFile() {}
 void moveFile() {}
 
 void deleteDir() {
+  printDirs(true, 0);
+
   int dirToDelete = ioHandler.getInput<int>(
       {""}, "Folder#: ", "Please type in a valid folder number to remove");
+
   vector dirs = dirInfo.first;
+
   if (dirToDelete > dirs.size() || dirToDelete < 1) {
-    exceptionHandler.printPlainError("Please provide a valid selection in the "
-                                     "list of directories available by number");
+    exceptionHandler.printPlainError(
+        "Please provide a valid selection in the "
+        "list of directories available by number");
     printFolderOptions();
     return;
   }
+
   string dirname = dirs[dirToDelete].path;
   bool didDel = fileManager.deleteDir(dirname);
+
   if (!didDel) {
     string errStr =
         "We encountered an issue deleting folder " + dirname +
@@ -450,6 +458,9 @@ void deleteDir() {
         dirname + " to delete the folder";
     exceptionHandler.printPlainError(errStr);
   }
+
+  system("clear");
+  updateDirInfo();
   cout << "\nSuccessfully deleted " << dirname << "." << "\n";
   printFolderOptions();
   return;
@@ -468,59 +479,63 @@ void pullDir() {}
 void moveDir() {}
 
 void printFolderOptions() {
-  for (const string &option : noteFolderOptions) {
+  for (const string& option : noteFolderOptions) {
     cout << option << endl;
   }
+
   cout << endl;
   printDirs(false, 0);
+
   int choice = ioHandler.getInput<int>(
       {""}, "Option: ", "Please enter a valid response");
+
   if (choice < 1 || choice > 8) {
     system("clear");
     cout << "Choose an option between" + RED + "1 & 8" + ENDCOLOR << endl;
     printFolderOptions();
   }
+
   switch (choice) {
-  case NoteFolderOptions::OPEN:
-    openDir();
-    break;
-  case NoteFolderOptions::CREATE:
-    system("clear");
-    createNewDir();
-    break;
-  case NoteFolderOptions::DELETE:
-    system("clear");
-    deleteDir();
-    break;
-  case NoteFolderOptions::COPY:
-    system("clear");
-    copyDir();
-    break;
-  case NoteFolderOptions::MOVE:
-    system("clear");
-    moveDir();
-    break;
-  case NoteFolderOptions::PUSH:
-    system("clear");
-    pushDir();
-    break;
-  case NoteFolderOptions::PULL:
-    system("clear");
-    pullDir();
-    break;
-  case NoteFolderOptions::SYNC:
-    system("clear");
-    syncDir();
-    break;
-  default:
-    system("clear");
-    printMenu();
-    break;
+    case NoteFolderOptions::OPEN:
+      openDir();
+      break;
+    case NoteFolderOptions::CREATE:
+      system("clear");
+      createNewDir();
+      break;
+    case NoteFolderOptions::DELETE:
+      system("clear");
+      deleteDir();
+      break;
+    case NoteFolderOptions::COPY:
+      system("clear");
+      copyDir();
+      break;
+    case NoteFolderOptions::MOVE:
+      system("clear");
+      moveDir();
+      break;
+    case NoteFolderOptions::PUSH:
+      system("clear");
+      pushDir();
+      break;
+    case NoteFolderOptions::PULL:
+      system("clear");
+      pullDir();
+      break;
+    case NoteFolderOptions::SYNC:
+      system("clear");
+      syncDir();
+      break;
+    default:
+      system("clear");
+      printMenu();
+      break;
   }
 }
 
 void printNotesOptions() {
-  for (const string &option : noteFolderOptions) {
+  for (const string& option : noteFolderOptions) {
     cout << option << endl;
   }
   cout << endl;
@@ -533,76 +548,76 @@ void printNotesOptions() {
     printNotesOptions();
   }
   switch (choice) {
-  case NoteFolderOptions::OPEN:
-    openNote();
-    break;
-  case NoteFolderOptions::CREATE:
-    system("clear");
-    createNewFile();
-    break;
-  case NoteFolderOptions::DELETE:
-    system("clear");
-    deleteFile();
-    break;
-  case NoteFolderOptions::COPY:
-    system("clear");
-    copyFile();
-    break;
-  case NoteFolderOptions::MOVE:
-    system("clear");
-    moveFile();
-    break;
-  case NoteFolderOptions::PUSH:
-    system("clear");
-    pushFile();
-    break;
-  case NoteFolderOptions::PULL:
-    system("clear");
-    pullFile();
-    break;
-  case NoteFolderOptions::SYNC:
-    system("clear");
-    syncFile();
-    break;
-  default:
-    system("clear");
-    printMenu();
-    break;
+    case NoteFolderOptions::OPEN:
+      openNote();
+      break;
+    case NoteFolderOptions::CREATE:
+      system("clear");
+      createNewFile();
+      break;
+    case NoteFolderOptions::DELETE:
+      system("clear");
+      deleteFile();
+      break;
+    case NoteFolderOptions::COPY:
+      system("clear");
+      copyFile();
+      break;
+    case NoteFolderOptions::MOVE:
+      system("clear");
+      moveFile();
+      break;
+    case NoteFolderOptions::PUSH:
+      system("clear");
+      pushFile();
+      break;
+    case NoteFolderOptions::PULL:
+      system("clear");
+      pullFile();
+      break;
+    case NoteFolderOptions::SYNC:
+      system("clear");
+      syncFile();
+      break;
+    default:
+      system("clear");
+      printMenu();
+      break;
   }
 }
 
-void selectAction(const int &option) {
+void selectAction(const int& option) {
   switch (option) {
-  case Options::NOTES:
-    system("clear");
-    printNotesOptions();
-    break;
-  case Options::FOLDERS:
-    system("clear");
-    printFolderOptions();
-    break;
-  case Options::SETTINGS:
-    system("clear");
-    printSettings();
-    break;
-  case Options::LOGOUT:
-    system("clear");
-    configManager.logout();
-    break;
-  case Options::QUIT:
-    system("clear");
-    break;
-  default:
-    system("clear");
-    exceptionHandler.printPlainError(
-        "Please input a valid option. You can select options 1 - 8");
-    printMenu();
-    break;
+    case Options::NOTES:
+      system("clear");
+      printNotesOptions();
+      break;
+    case Options::FOLDERS:
+      system("clear");
+      printFolderOptions();
+      break;
+    case Options::SETTINGS:
+      system("clear");
+      printSettings();
+      break;
+    case Options::LOGOUT:
+      system("clear");
+      configManager.logout();
+      break;
+    case Options::QUIT:
+      system("clear");
+      break;
+    default:
+      system("clear");
+      exceptionHandler.printPlainError(
+          "Please input a valid option. You can select options 1 - 8");
+      printMenu();
+      break;
   }
 }
 
 void printSettings() {
-  for (const string &setting : settings) {
+  for (const string& setting : settings) {
     cout << setting << endl;
   }
   int selection = ioHandler.getInput<int>(
@@ -621,7 +636,20 @@ void printSettings() {
 
 // Checks to see if user input is to navigate to folder or open a note in
 // current dir
-void checkForNavigationOrFileOpening(string &userInput) {
+void checkForNavigationOrFileOpening(string& userInput) {
+  if (userInput == "../") {
+    string backDirName = fileManager.navBack();
+    updateDirInfo();
+    if (backDirName == userInfo[5]) {
+      title = "HOME";
+    } else {
+      title = backDirName;
+    }
+    nesting--;
+    system("clear");
+    printMenu();
+    return;
+  }
   // folder or not found match to userInput
   bool found = false;
   // name of folder or note
@@ -632,7 +660,7 @@ void checkForNavigationOrFileOpening(string &userInput) {
   vector<string> fileNames = fileManager.getFileNamesInCurrentDir();
   vector<string> folderNames = fileManager.getFolderNamesInCurrentDir();
 
-  for (const string &folderName : folderNames) {
+  for (const string& folderName : folderNames) {
     if (userInput == folderName) {
       found = true;
       name = folderName;
@@ -641,9 +669,7 @@ void checkForNavigationOrFileOpening(string &userInput) {
     }
   }
 
-  for (const string &fileName : fileNames) {
-    cout << "File name: " << fileName << endl;
-    cout << "User input: " << userInput << endl;
+  for (const string& fileName : fileNames) {
     if (userInput == fileName) {
       found = true;
       name = fileName;
@@ -654,12 +680,14 @@ void checkForNavigationOrFileOpening(string &userInput) {
 
   if (found) {
     if (typeFound == "file") {
-      fstream *file = fileManager.openFileReadWrite(userInput);
+      fstream* file = fileManager.openFileReadWrite(userInput);
       openEditor(file, name);
       return;
     }
 
-    fileManager.navDir(name);
+    fileManager.navDir(fileManager.getCurrentPath() + "/" + name);
+    updateDirInfo();
+    title = name;
     system("clear");
     printMenu();
     return;
@@ -677,16 +705,20 @@ void printMenu() {
   cout << "Folder: " << RED + fileManager.getCurrentPath() + ENDCOLOR << " "
        << endl
        << endl;
-  cout << title << endl << endl;
+  cout << PURPLE + title + ENDCOLOR << endl << endl;
   cout << "Welcome " << userInfo[1] << endl;
-  cout << "**************" << endl;
+  cout << BLUE + "**************" + ENDCOLOR << endl;
 
-  for (const string &option : options) {
+  for (const string& option : options) {
     cout << option << endl;
   }
   cout << endl << endl;
 
+  cout << PURPLE + "Folders: " + ENDCOLOR << endl;
   printDirs(false, 0);
+  cout << endl << endl;
+
+  cout << PURPLE + "Notes: " + ENDCOLOR << endl;
   printFiles(false, 0);
 
   // Allow the user to both type folers and note titles to either immediatly
@@ -694,11 +726,11 @@ void printMenu() {
   variant<int, string> selection =
       ioHandler.getInput({{""}}, "Option or type file/folder name: ");
 
-  if (int *repliedSelection = get_if<int>(&selection)) {
+  if (int* repliedSelection = get_if<int>(&selection)) {
     selectAction(*repliedSelection);
     return;
   }
-  if (string *repliedSelection = get_if<string>(&selection)) {
+  if (string* repliedSelection = get_if<string>(&selection)) {
     checkForNavigationOrFileOpening(*repliedSelection);
     return;
   }
@@ -712,12 +744,12 @@ void printMenu() {
 }
 
 void checkForAccount() {
-  ifstream *config = configManager.checkForLocalConfigFile(
+  ifstream* config = configManager.checkForLocalConfigFile(
       fileManager.HOME_DIR + "/" + "config.yaml");
 
   if (!config) {
     delete config;
-    ofstream *newConfig = configManager.createConfigFile(fileManager.HOME_DIR +
+    ofstream* newConfig = configManager.createConfigFile(fileManager.HOME_DIR +
                                                          "/" + "config.yaml");
     if (!newConfig) {
       delete newConfig;
@@ -760,7 +792,7 @@ void checkForAccount() {
             "Please make sure you give the correct access rights to the home "
             "directory or the application will not work");
       }
-      const auto &info = fileManager.grabDirsAndFiles();
+      const auto& info = fileManager.grabDirsAndFiles();
       dirInfo = info;
       config->close();
       delete config;
@@ -771,7 +803,7 @@ void checkForAccount() {
   }
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   system("clear");
   checkForAccount();
   return 0;
