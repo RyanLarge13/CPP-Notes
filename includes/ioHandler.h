@@ -51,8 +51,8 @@ public:
 
       if (pos == answer.size())
         return number;
-    } catch (err) {
-      return "";
+    } catch (const std::exception &e) {
+      return answer;
     }
 
     return answer;

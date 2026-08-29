@@ -178,6 +178,17 @@ public:
     return newFile;
   }
 
+  fstream *createFile(const string &fileName) {
+    fstream *newFile = new fstream(fileName, ios::in | ios::out | ios::trunc);
+
+    if (!newFile->is_open()) {
+      cout << "Could not create file." << endl;
+      return nullptr;
+    }
+
+    return newFile;
+  }
+
   bool createNewDir(const string &path) {
     try {
       if (create_directory(HOME_DIR + path)) {

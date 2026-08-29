@@ -105,7 +105,7 @@ void printFiles(const bool &showIndex, const int &start) {
   cout << endl;
 }
 
-void openEditor(const ofstream &newFile, const string &fileName) {
+void openEditor(fstream *newFile, const string &fileName) {
   initscr();
   raw();
   keypad(stdscr, TRUE);
@@ -147,9 +147,7 @@ void openEditor(const ofstream &newFile, const string &fileName) {
     }
   }
   endwin();
-  for (char textCh : text) {
-    *newFile << textCh;
-  }
+  *newFile << text;
   newFile->close();
   delete newFile;
   updateDirInfo();
@@ -161,7 +159,7 @@ void createNewFile() {
   string fileName = ioHandler.getInput<string>(
       {{"Give your new note a name"}},
       "New name: ", "Please provide the file with a valid name");
-  ofstream *newFile = fileManager.createNewFile(fileName + ".wn");
+  fstream *newFile = fileManager.createFile(fileName + ".wn");
   if (!newFile) {
     exceptionHandler.printPlainError(
         "Please make sure you have the necessary read write permissions set to "
@@ -171,7 +169,7 @@ void createNewFile() {
     printMenu();
   }
 
-  openEditor(*newFile, fileName);
+  openEditor(newFile, fileName);
 }
 
 void createNewDir() {
@@ -623,7 +621,7 @@ void printSettings() {
 
 // Checks to see if user input is to navigate to folder or open a note in
 // current dir
-void checkForNavigationOrFileOpening(const string &userInput) {
+void checkForNavigationOrFileOpening(string &userInput) {
   // folder or not found match to userInput
   bool found = false;
   // name of folder or note
@@ -644,17 +642,19 @@ void checkForNavigationOrFileOpening(const string &userInput) {
   }
 
   for (const string &fileName : fileNames) {
+    cout << "File name: " << fileName << endl;
+    cout << "User input: " << userInput << endl;
     if (userInput == fileName) {
       found = true;
       name = fileName;
-      type = "file";
+      typeFound = "file";
       break;
     }
   }
 
   if (found) {
-    if (type == "file") {
-      ofstream *file = fileManager.openFileReadWrite(userInput);
+    if (typeFound == "file") {
+      fstream *file = fileManager.openFileReadWrite(userInput);
       openEditor(file, name);
       return;
     }
@@ -665,7 +665,7 @@ void checkForNavigationOrFileOpening(const string &userInput) {
     return;
   }
 
-  system("clear");
+  // system("clear");
   exceptionHandler.printPlainError(
       "We could not find any folder or note that name matches with your "
       "input " +
@@ -691,17 +691,15 @@ void printMenu() {
 
   // Allow the user to both type folers and note titles to either immediatly
   // open a note or immediately open a folder
-  variant<int, string> selection = ioHandler.getInput(
-      {{""}}, "Option: ",
-      "Please type a valid operation. You can select an options number or you "
-      "can type in a folder name or note + extension name to edit or navigate");
+  variant<int, string> selection =
+      ioHandler.getInput({{""}}, "Option or type file/folder name: ");
 
   if (int *repliedSelection = get_if<int>(&selection)) {
-    selectAction(selection);
+    selectAction(*repliedSelection);
     return;
   }
   if (string *repliedSelection = get_if<string>(&selection)) {
-    checkForNavigationOrFileOpening(selection);
+    checkForNavigationOrFileOpening(*repliedSelection);
     return;
   }
 
