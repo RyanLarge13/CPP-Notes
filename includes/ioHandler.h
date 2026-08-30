@@ -10,14 +10,14 @@ using namespace std;
 #define IO_HAMDLER_H
 
 class IoHandler {
-private:
-public:
+ private:
+ public:
   template <typename T>
-  T getInput(const vector<string> &texts, const string &question,
-             const string &reply) {
+  T getInput(const vector<string>& texts, const string& question,
+             const string& reply) {
     bool input = true;
     T answer;
-    for (const string &text : texts) {
+    for (const string& text : texts) {
       cout << text << endl;
     }
     cout << question;
@@ -34,13 +34,11 @@ public:
     return answer;
   }
 
-  variant<int, string> getInput(const vector<string> &texts,
-                                const string &question) {
-
+  variant<int, string> getInput(const vector<string>& texts,
+                                const string& question) {
     string answer;
 
-    for (const string &text : texts)
-      cout << text << endl;
+    for (const string& text : texts) cout << text << endl;
 
     cout << question;
     getline(cin >> ws, answer);
@@ -49,9 +47,8 @@ public:
       size_t pos;
       int number = stoi(answer, &pos);
 
-      if (pos == answer.size())
-        return number;
-    } catch (const std::exception &e) {
+      if (pos == answer.size()) return number;
+    } catch (const std::exception& e) {
       return answer;
     }
 

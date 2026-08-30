@@ -41,6 +41,7 @@ enum Options : int {
   NOTES = 1,
   FOLDERS,
   SETTINGS,
+  SYNC_DATA,
   LOGOUT,
   QUIT,
   DELETE_ACCOUNT
@@ -57,12 +58,10 @@ enum NoteFolderOptions : int {
   BACK = 999
 };
 
-const vector<string> options = {"1. Notes",
-                                "2. Folders",
-                                "5. Settings",
-                                "6. Logout",
-                                "7. Quit (stay logged in)",
-                                "8. Delete Account"};
+const vector<string> options = {"1. Notes",         "2. Folders",
+                                "3. Settings",      "4. Sync Data",
+                                "5. Logout",        "6. Quit (stay logged in)",
+                                "7. Delete Account"};
 
 const vector<string> noteFolderOptions = {"1. Open", "2. Create", "3. Delete",
                                           "4. Copy", "5. Move",   "6. Pull",
@@ -433,13 +432,14 @@ void moveFile() {}
 
 void deleteDir() {
   printDirs(true, 0);
+  bool deletingNonEmptyDir = false;
 
   int dirToDelete = ioHandler.getInput<int>(
       {""}, "Folder#: ", "Please type in a valid folder number to remove");
 
   vector dirs = dirInfo.first;
 
-  if (dirToDelete > dirs.size() || dirToDelete < 1) {
+  if (dirToDelete > dirs.size() || dirToDelete < 0) {
     exceptionHandler.printPlainError(
         "Please provide a valid selection in the "
         "list of directories available by number");
@@ -447,21 +447,38 @@ void deleteDir() {
     return;
   }
 
-  string dirname = dirs[dirToDelete].path;
-  bool didDel = fileManager.deleteDir(dirname);
+  FileManager::DirVectorData dirInfo = dirs[dirToDelete];
+  bool isEmptyDir = fileManager.dirIsEmpty(dirInfo);
+
+  if (!isEmptyDir) {
+    bool confirm = exceptionHandler.handleError(
+        {"If you delete this directory everthing inside it will be deleted as "
+         "well"},
+        "Continue (Y/n): ");
+
+    if (!confirm) {
+      return;
+    }
+
+    deletingNonEmptyDir = true;
+  }
+
+  string fullFilePath = fileManager.getCurrentPath() + "/" + dirInfo.path;
+
+  bool didDel = fileManager.delDir(deletingNonEmptyDir, fullFilePath);
 
   if (!didDel) {
     string errStr =
-        "We encountered an issue deleting folder " + dirname +
+        "We encountered an issue deleting folder " + dirInfo.path +
         " \n please confirm you have the correct permissions set, and the "
         "directory exists. You can always manually go into " +
-        dirname + " to delete the folder";
+        dirInfo.path + " to delete the folder";
     exceptionHandler.printPlainError(errStr);
   }
 
   system("clear");
   updateDirInfo();
-  cout << "\nSuccessfully deleted " << dirname << "." << "\n";
+  cout << "\nSuccessfully deleted " << dirInfo.path << "." << "\n";
   printFolderOptions();
   return;
 }
@@ -600,17 +617,51 @@ void selectAction(const int& option) {
       system("clear");
       printSettings();
       break;
-    case Options::LOGOUT:
+    case Options::SYNC_DATA:
       system("clear");
-      configManager.logout();
+      printSettings();
       break;
+    case Options::LOGOUT: {
+      system("clear");
+      bool loggedOut = configManager.logout();
+      if (!loggedOut) {
+        system("clear");
+        printMenu();
+      }
+      break;
+    }
     case Options::QUIT:
       system("clear");
       break;
+    case Options::DELETE_ACCOUNT: {
+      bool confirmDeletion = configManager.deleteAccount();
+
+      if (!confirmDeletion) {
+        printMenu();
+        break;
+      }
+
+      string substrHome = fileManager.HOME_DIR + userInfo[5];
+
+      bool deleteStorageFolder = fileManager.delDir(true, substrHome);
+
+      if (deleteStorageFolder) {
+        exceptionHandler.printPlainError(
+            "Your account and data have officially been deleted.");
+        break;
+      }
+
+      exceptionHandler.printPlainError(
+          "There seems to have been a problem deleting your data. You can "
+          "manually delete your folder in root." +
+          userInfo[5]);
+      break;
+    }
     default:
       system("clear");
       exceptionHandler.printPlainError(
-          "Please input a valid option. You can select options 1 - 8");
+          "Please input a valid option. You can select options 1 - " +
+          to_string(options.size()));
       printMenu();
       break;
   }

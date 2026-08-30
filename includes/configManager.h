@@ -16,8 +16,8 @@ using namespace std;
 #define CONFIGMANAGER_H
 
 class ConfigManager {
-private:
-  void confirmPass(const string &password) {
+ private:
+  void confirmPass(const string& password) {
     string confirmPassword = ioHandler.getInput<string>(
         {{"Confirm your password"}},
         "Confirm Password: ", "Please input valid characters");
@@ -54,13 +54,13 @@ private:
           "We could not log you out. Please try again");
       return false;
     }
-    fstream *file = fileManager.openFileReadWrite(fileManager.HOME_DIR + "/" +
+    fstream* file = fileManager.openFileReadWrite(fileManager.HOME_DIR + "/" +
                                                   "config.yaml");
     if (!file) {
       return false;
     }
     rows[0] = "logged_in: " + state;
-    for (const string &row : rows) {
+    for (const string& row : rows) {
       *file << row << "\n";
     }
     file->close();
@@ -99,11 +99,11 @@ private:
   string createUsername() {
     string username = ioHandler.getInput<string>(
         {{""}}, "Username: ", "Your username must be valid characters");
-    if (!validator.checkValidString(3, 20,
-                                    {'<', '>', ',', '{', '}', '[', ']', '!',
-                                     '@', '#', '$', '%', '^', '&', '*', '(',
-                                     ')', '+', '='},
-                                    username)) {
+    if (!validator.checkValidString(
+            3, 20,
+            {'<', '>', ',', '{', '}', '[', ']', '!', '@', '#', '$', '%', '^',
+             '&', '*', '(', ')', '+', '='},
+            username)) {
       exceptionHandler.printPlainError("Please insert a valid username");
       exceptionHandler.printInstructions(
           {{"- Can ONLY contain:", "  - letters", "  - numbers",
@@ -204,17 +204,18 @@ private:
     return pin;
   };
 
-  bool initializeConfig(const string &username, const string &email,
-                        string password, int pin, const string &mainDir,
-                        ofstream *configFile) {
+  bool initializeConfig(const string& username, const string& email,
+                        string password, int pin, const string& mainDir,
+                        ofstream* configFile) {
     if (!configFile) {
       cout << "No config file defined canceling initialize config" << endl;
     }
     if (username.size() < 1 || email.size() < 1 || password.size() < 1 ||
         pin < 1000) {
-      exceptionHandler.printPlainError("You must complete the registration "
-                                       "process before creating a new "
-                                       "account");
+      exceptionHandler.printPlainError(
+          "You must complete the registration "
+          "process before creating a new "
+          "account");
       configFile->close();
       return false;
     }
@@ -228,7 +229,7 @@ private:
     return true;
   }
 
-  string getNewUsername(const string &currentUsername) {
+  string getNewUsername(const string& currentUsername) {
     const string newUsername = ioHandler.getInput<string>(
         {{"Type your current username again to cancel and return to the "
           "main "
@@ -262,7 +263,7 @@ private:
     return newUsername;
   }
 
-  string getNewPass(const string &currentPass) {
+  string getNewPass(const string& currentPass) {
     const string newPass = ioHandler.getInput<string>(
         {{""}}, "New password: ", "Please provide a valid response");
     if (newPass == currentPass) {
@@ -279,7 +280,7 @@ private:
     return newPass;
   }
 
-  int getNewPin(const int &currentPin) {
+  int getNewPin(const int& currentPin) {
     const int newPin =
         ioHandler.getInput<int>({{"Enter your original pin value to cancel and "
                                   "return to the main menu"}},
@@ -298,8 +299,8 @@ private:
     return newPin;
   }
 
-  bool updateConfig(const vector<string> &userInfo) {
-    fstream *config =
+  bool updateConfig(const vector<string>& userInfo) {
+    fstream* config =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
     if (!config) {
       delete config;
@@ -316,8 +317,8 @@ private:
     return true;
   }
 
-public:
-  bool changeUsername(vector<string> &userInfo) {
+ public:
+  bool changeUsername(vector<string>& userInfo) {
     cout << "Okay, let's change your username. To exit, simply type your "
             "current username when asked to give a new one"
          << endl;
@@ -346,7 +347,7 @@ public:
     return didUpdate;
   }
 
-  bool changePass(vector<string> &userInfo) {
+  bool changePass(vector<string>& userInfo) {
     const string currentPass = userInfo[3];
     cout << "Okay, let's change your password. To cancel and return to main "
             "menu type in your current password again when asked for a new "
@@ -374,7 +375,7 @@ public:
     return didUpdate;
   }
 
-  bool changePin(vector<string> &userInfo) {
+  bool changePin(vector<string>& userInfo) {
     const int currentPin = stoi(userInfo[4]);
     cout << "Okay, sounds good. let's change your pin for logging in and "
             "opening locked notes"
@@ -402,7 +403,7 @@ public:
     return configUpdated;
   }
 
-  bool changeDir(vector<string> &userInfo) {
+  bool changeDir(vector<string>& userInfo) {
     const string currentMainDir = userInfo[5];
     cout << "Okay, let's change the directory name that you store your "
             "folders "
@@ -452,7 +453,7 @@ public:
     return false;
   }
 
-  bool nameMainDir(const string &dirname) {
+  bool nameMainDir(const string& dirname) {
     bool newDirCreated = fileManager.createNewDir(dirname);
     if (!newDirCreated) {
       exceptionHandler.printPlainError(
@@ -465,7 +466,7 @@ public:
   }
 
   vector<string> getUserInfo(bool rawData) {
-    fstream *file =
+    fstream* file =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
     if (!file) {
       delete file;
@@ -505,16 +506,16 @@ public:
     return rows;
   }
 
-  ifstream *checkForLocalConfigFile(const string &fileName) {
-    ifstream *fileExists = fileManager.checkExistingFile(fileName);
+  ifstream* checkForLocalConfigFile(const string& fileName) {
+    ifstream* fileExists = fileManager.checkExistingFile(fileName);
     if (!fileExists) {
       return nullptr;
     }
     return fileExists;
   }
 
-  ofstream *createConfigFile(const string &fileName) {
-    ofstream *newConfig = fileManager.createNewFile(fileName);
+  ofstream* createConfigFile(const string& fileName) {
+    ofstream* newConfig = fileManager.createNewFile(fileName);
     if (!newConfig) {
       delete newConfig;
       bool userInput = exceptionHandler.handleError(
@@ -538,7 +539,8 @@ public:
   }
 
   // Checking if account is fully updated and complete and exists
-  // returning 1 means incomplete account. 0 means complete and logged in. 3 means exit app
+  // returning 1 means incomplete account. 0 means complete and logged in. 3
+  // means exit app
   int checkForExistingAccount() {
     bool confirmed = false;
     vector<string> rows = getUserInfo(false);
@@ -569,7 +571,8 @@ public:
         system("clear");
         login();
 
-        // Returning 0 to caller from main.cpp prints menu. Only a successful login returns 
+        // Returning 0 to caller from main.cpp prints menu. Only a successful
+        // login returns
         return 0;
       }
     }
@@ -579,7 +582,7 @@ public:
 
   // Create or login to existing account for Electron/ Native Notes
   // ---------------------------
-  void createAccount(ofstream *configFile) {
+  void createAccount(ofstream* configFile) {
     // Ask the user to login
     cout << "Let's create an account" << endl << "Welcome to CPP-Notes" << endl;
 
@@ -632,10 +635,10 @@ public:
     }
   }
 
-  void finishCreatingAccount(vector<string> &currentData) {
+  void finishCreatingAccount(vector<string>& currentData) {
     size_t length = currentData.size();
     if (length < 1) {
-      ofstream *newConfig =
+      ofstream* newConfig =
           createConfigFile(fileManager.HOME_DIR + "/" + "config.yaml");
       createAccount(newConfig);
       delete newConfig;
@@ -687,7 +690,7 @@ public:
       finishCreatingAccount(currentData);
     }
     if (length >= 6) {
-      ofstream *configFile =
+      ofstream* configFile =
           fileManager.createNewFile(fileManager.HOME_DIR + "/" + "config.yaml");
       bool configInitialized =
           initializeConfig(currentData[1], currentData[2], currentData[3],
@@ -719,20 +722,55 @@ public:
     return;
   }
 
-  void logout() {
+  bool logout() {
     string confirmLogout = ioHandler.getInput<string>(
         {{""}}, "Are you sure you want to logout? (Y/n): ",
         "Please provide a valid answer, Y for yes, n for no");
+
     if (confirmLogout == "Y" || confirmLogout == "y") {
       changeLogin("false");
-      return;
+      return true;
     }
-    return;
+
+    return false;
   }
 
-  void deleteAccount() {
-    remove("config.yaml");
-    return;
+  bool deleteAccount() {
+    bool confirmed = exceptionHandler.handleError(
+        {YELLOW +
+         "If you delete your account all folders and notes will be lost if you "
+         "have not backed them up." +
+         ENDCOLOR},
+        "Are you sure you want to continue with this operation? (Y/n): ");
+
+    if (!confirmed) {
+      return false;
+    }
+
+    try {
+      bool fileDeleted =
+          fileManager.deleteFile(fileManager.HOME_DIR + "/config.yaml");
+
+      if (!fileDeleted) {
+        system("clear");
+        exceptionHandler.printPlainError(
+            YELLOW +
+            "Your account file could not be deleted. Find config.yaml and "
+            "remove it" +
+            ENDCOLOR);
+        return false;
+      }
+
+      return true;
+    } catch (const filesystem_error& err) {
+      system("clear");
+      exceptionHandler.printPlainError(
+          YELLOW +
+          "Your account file could not be deleted. Find config.yaml and "
+          "remove it" +
+          ENDCOLOR);
+      return false;
+    }
   }
 };
 

@@ -243,12 +243,29 @@ class FileManager {
     }
   }
 
-  bool deleteDir(const string& dirname) {
-    if (dirname.empty()) {
-      cout << "Your directory is not empty" << endl;
+  bool dirIsEmpty(const DirVectorData& dirData) {
+    if (dirData.nestedDirCt > 0 || dirData.nestedFileCt > 0) {
       return false;
     }
     return true;
+  }
+
+  bool delDir(const bool& nested, const string& dirName) {
+    if (nested) {
+      try {
+        remove_all(dirName);
+        return true;
+      } catch (const filesystem_error& err) {
+        return false;
+      }
+    }
+
+    try {
+      remove(dirName);
+      return true;
+    } catch (const filesystem_error& err) {
+      return false;
+    }
   }
 
   vector<string> getFileNamesInCurrentDir() {
