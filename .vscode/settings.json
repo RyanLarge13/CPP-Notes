@@ -2,5 +2,5 @@
   "cSpell.words": ["ENDCOLOR", "stio"],
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "xaver.clang-format",
-  // "clang-format.executable": "C:\\Users\\RLarge\\Documents\\LLVM\\bin\\clang-format.exe"
+  "clang-format.executable": "C:\\Users\\RLarge\\Documents\\LLVM\\bin\\clang-format.exe"
 }
