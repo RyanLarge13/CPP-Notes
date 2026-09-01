@@ -11,17 +11,65 @@ using namespace std;
 #ifndef HTTP_HANDLER_H
 #define HTTP_HANDLER_H
 class HttpHandler {
+public:
+  struct HttpResponse {
+    CURLcode curlCode;
+    long httpCode;
+    string body;
+
+    HttpResponse(const CURLcode &curlCode, const long &httpCode,
+                 const string &body)
+        : curlCode(curlCode), httpCode(httpCode), body(body) {}
+  };
+
 private:
   CURL *curl = nullptr;
-  curl_slist *jsonHeaders;
+  curl_slist *jsonHeaders = nullptr;
   string baseUrl = "https://notesserver-production-9640.up.railway.app";
 
-  CURLcode setAndSendCurlCall(const string &url, const string &jsonData) {
+  static size_t writeCallback(char *contents, size_t size, size_t nmemb,
+                              void *userData) {
+    size_t totalSize = size * nmemb;
+
+    string *response = static_cast<string *>(userData);
+    response->append(contents, totalSize);
+
+    return totalSize;
+  }
+
+  struct JsonData {
+    string jsonData;
+    bool hasJson;
+
+    JsonData(const string &jsonData, bool hasJson)
+        : jsonData(jsonData), hasJson(hasJson) {}
+  };
+
+  HttpResponse callAPI(const string &url, const JsonData &json,
+                       const string &httpMethod) {
+    curl_easy_reset(curl);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, jsonHeaders);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
+    // explicetly set http method type
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, httpMethod.c_str());
 
-    CURLcode res = curl_easy_perform(curl);
+    if (json.hasJson) {
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json.jsonData.c_str());
+    }
+
+    // Response body
+    string responseBody = "";
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
+
+    // Curl OK or not
+    CURLcode curlStatus = curl_easy_perform(curl);
+
+    // Http status code
+    long httpCode = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+
+    HttpResponse res = HttpResponse(curlStatus, httpCode, responseBody);
 
     return res;
   }
@@ -31,27 +79,44 @@ public:
   struct j {
     string key;
     variant<string, int, bool> value;
-    jsonValues(const string &key, const variant<string, int, bool> &value)
+    j(const string &key, const variant<string, int, bool> &value)
         : key(key), value(value) {}
-  }
+  };
 
   HttpHandler() {
     CURLcode result = curl_global_init(CURL_GLOBAL_DEFAULT);
-    jsonHeaders = curl_slist_append(nullptr, "Content-Type: application/json");
 
     if (result != CURLE_OK) {
       cout << curl_easy_strerror(result) << endl;
       throw runtime_error("Failed to initialize libcurl. Check httpHandler");
-
-      return;
     }
 
     curl = curl_easy_init();
 
     if (!curl) {
-      throw runtime_error("Failed to initialize curl handle");
+      // Must clean up here. Destructor wont run if construction throws
+      curl_global_cleanup();
+
+      throw runtime_error("Failed to initialize CURL easy handle");
+    }
+
+    jsonHeaders = curl_slist_append(nullptr, "Content-Type: application/json");
+
+    if (!jsonHeaders) {
+      // Clean up again because header construction can also fail
+      curl_easy_cleanup(curl);
+      curl = nullptr;
+
+      curl_global_cleanup();
+
+      throw runtime_error("Failed to create CURL JSON headers");
     }
   }
+
+  // No copy construction possible for class
+  HttpHandler(const HttpHandler &) = delete;
+  // No copy assigning either of class
+  HttpHandler &operator=(const HttpHandler &) = delete;
 
   ~HttpHandler() {
     curl_slist_free_all(jsonHeaders);
@@ -97,18 +162,16 @@ public:
     string jsonString = "{";
 
     for (const j &keyValue : json) {
-      string key = keyValue.key;
-      variant<string, int, bool> value = keyValue.value;
+      const string &key = keyValue.key;
+      const variant<string, int, bool> &value = keyValue.value;
 
       jsonString += "\"" + serializeJsonString(key) + "\": ";
 
       if (holds_alternative<string>(value)) {
         jsonString += "\"" + serializeJsonString(get<string>(value)) + "\","
-      }
-      if (holds_alternative<int>(value)) {
+      } else if (holds_alternative<int>(value)) {
         jsonString += to_string(get<int>(value)) + ",";
-      }
-      if (holds_alternative<bool>(value)) {
+      } else if (holds_alternative<bool>(value)) {
         string boolString = get<bool>(value) ? "true" : "false";
         jsonString += boolString + ",";
       }
@@ -122,47 +185,30 @@ public:
     return jsonString;
   }
 
-  bool saveNote(const string &note, const string &title, int folderId,
-                bool locked) {
+  HttpResponse saveNote(const string &note, const string &title, int folderId,
+                        bool locked) {
     string url = baseUrl + "/notes/create";
-    string lockedString = locked ? "true" : "false";
 
-    vector<j> json = {j("htmlNotes" : note), j("title", title),
+    vector<j> json = {j("htmlNotes", note), j("title", title),
                       j("folderId", folderId), j("locked", locked)};
     string jsonData = buildJson(json);
 
-    CURLcode res = setAndSendCurlCall(url, jsonData);
+    HttpResponse res = callAPI(url, JsonData(jsonData, true), "POST");
 
-    if (res != CURLE_OK) {
-      cout << RED + "Network request failed: " + ENDCOLOR << endl;
-      cout << stderr << endl;
-      cout << "Response: " << endl << curl_easy_strerror(res) << endl;
-      return false;
-    }
-
-    return true;
+    return res;
   }
 
-  bool login(const string &username, const string &email,
-             const string &password) {
+  HttpResponse login(const string &username, const string &email,
+                     const string &password) {
     string url = baseUrl + "/user/login";
 
-    string jsonData = "{\"username\": \"" + username + "\", \"email\": \"" +
-                      email + ", \"password\": " + password + "\}";
+    vector<j> json = {j("username", username), j("email", email),
+                      j("password", password)};
+    string jsonData = buildJson(json);
 
-    CURLcode res = setAndSendCurlCall(url, jsonData);
+    HttpResponse res = callAPI(url, JsonData(jsonData, true), "POST");
 
-    long httpCode = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
-
-    if (res != CURLE_OK) {
-      cout << RED + "Network request failed: " + ENDCOLOR << endl;
-      cout << stderr << endl;
-      cout << "Response: " << endl << curl_easy_strerror(res) << endl;
-      return false;
-    }
-
-    return true;
+    return res;
   }
 };
 
