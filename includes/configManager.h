@@ -6,6 +6,7 @@
 
 #include "../common/exceptionHandlerInstance.h"
 #include "../common/fileManagerInstance.h"
+#include "../common/httpHandlerInstance.h"
 #include "../common/ioHandlerInstance.h"
 #include "../common/validatorInstance.h"
 #include "colors.h"
@@ -631,6 +632,9 @@ public:
     string password = ioHandler.getInput<string>(
         {"What is your password associated with your account?"},
         "Password: ", "Plese input a valid password");
+
+    HttpHandler::HttpResponse res =
+        HttpHandler::login(username, email, password);
   }
 
   // Create or login to existing account for Electron/ Native Notes
