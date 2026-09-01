@@ -11,18 +11,37 @@ using namespace std;
 #ifndef HTTP_HANDLER_H
 #define HTTP_HANDLER_H
 class HttpHandler {
-private:
-  CURL *curl = nullptr;
+ private:
+  CURL* curl = nullptr;
+  curl_slist* jsonHeaders;
   string baseUrl = "https://notesserver-production-9640.up.railway.app";
 
-public:
+  CURLcode setAndSendCurlCall(const string& url, const string& jsonData) {
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, jsonHeaders);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
+
+    CURLcode res = curl_easy_perform(curl);
+
+    return res;
+  }
+
+ public:
+  // JSON values capsule
+  struct j {
+    string key;
+    variant<string, int, bool> value;
+    jsonValues(const string& key, const variant<string, int, bool>& value)
+        : key(key), value(value) {}
+  }
+
   HttpHandler() {
     CURLcode result = curl_global_init(CURL_GLOBAL_DEFAULT);
+    jsonHeaders = curl_slist_append(nullptr, "Content-Type: application/json");
 
     if (result != CURLE_OK) {
-      string errorStr =
-          "Failed to initialize libcurl: " + curl_easy_strerror(result);
-      throw runtime_error(errorStr);
+      cout << curl_easy_strerror(result) << endl;
+      throw runtime_error("Failed to initialize libcurl. Check httpHandler");
 
       return;
     }
@@ -30,12 +49,13 @@ public:
     curl = curl_easy_init();
 
     if (!curl) {
-      string errorStr = "Failed to initialize curl handle";
-      throw runtime_error(errorStr);
+      throw runtime_error("Failed to initialize curl handle");
     }
   }
 
   ~HttpHandler() {
+    curl_slist_free_all(jsonHeaders);
+
     if (curl) {
       curl_easy_cleanup(curl);
     }
@@ -43,31 +63,41 @@ public:
     curl_global_cleanup();
   }
 
-  auto setAndSendCurlCall(const string &url, auto &headers,
-                          const string &jsonData) {
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
+  string buildJson(const vector<j>& json) {
+    string jsonString = "{";
 
-    auto res = curl_easy_perform(curl);
+    for (const j& keyValue : json) {
+      string key = keyValue.key;
+      variant<string, int, bool> value = keyValue.value;
+      string valueStr = "";
 
-    return res;
+      bool valIsStr = holds_alternative<string>(value);
+
+      jsonString += "\"" + key + "\": ";
+
+      if (valIsStr) {
+        jsonString += "\"" + value + "\","
+      } else {
+        valueStr = to_string(value);
+        jsonString += valueStr + ",";
+      }
+    }
+
+    jsonString += "}";
+
+    return jsonString;
   }
 
-  bool saveNote(const string &note, const string &title, int folderId,
+  bool saveNote(const string& note, const string& title, int folderId,
                 bool locked) {
     string url = baseUrl + "/notes/create";
     string lockedString = locked ? "true" : "false";
 
-    struct curl_slist *headers = NULL;
+    vector<j> json = {j("htmlNotes" : note), j("title", title),
+                      j("folderId", folderId), j("locked", locked)};
+    string jsonData = buildJson(json);
 
-    headers = curl_slist_append(headers, "Content-Type: application/json");
-
-    string jsonData = "{\"htmlNotes\": \"" + note + "\", \"title\": \"" +
-                      title + ", \"folderId\": " + to_string(folderId) +
-                      ", \"locked\": \"" + lockedString + "\"}";
-
-    res = setAndSendCurlCall(url, headers, jsonData);
+    CURLcode res = setAndSendCurlCall(url, jsonData);
 
     if (res != CURLE_OK) {
       cout << RED + "Network request failed: " + ENDCOLOR << endl;
@@ -79,17 +109,17 @@ public:
     return true;
   }
 
-  void login(const string &username, const string &email,
-             const string &password) {
+  bool login(const string& username, const string& email,
+             const string& password) {
     string url = baseUrl + "/user/login";
-    struct curl_slist *headers = NULL;
-
-    headers = curl_slist_append(headers, "Content-Type: application/json");
 
     string jsonData = "{\"username\": \"" + username + "\", \"email\": \"" +
-                      email + ", \"password\": " + password "}";
+                      email + ", \"password\": " + password + "\}";
 
-    res = setAndSendCurlCall(url, headers, jsonData);
+    CURLcode res = setAndSendCurlCall(url, jsonData);
+
+    long httpCode = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
 
     if (res != CURLE_OK) {
       cout << RED + "Network request failed: " + ENDCOLOR << endl;
