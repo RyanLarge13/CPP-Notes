@@ -14,31 +14,39 @@ public:
     for (const string &message : messages) {
       cout << message << endl;
     }
-		
+
     string answer;
     cout << question;
     cin >> answer;
-		
+
     if (cin.fail()) {
       cin.clear();
       cin.ignore(numeric_limits<streamsize>::max());
       return false;
     }
-		
+
     if (answer == "Y" || answer == "y") {
       return true;
     } else {
       return false;
     }
   }
-	
+
+  void printPlainError(const string &error) { cout << error << endl; }
+
+  void printStringResBody(const string &httpCode, const string &body) {
+    string errStr = "\\n\\n" YELLOW + "HTTP status code: \\n" + ENDCOLOR +
+                    httpCode + "\\n\\n" + YELLOW + "Res body: \\n" + ENDCOLOR +
+                    body + "\\n";
+
+    printPlainError(errStr);
+  }
+
   void printInstructions(const vector<string> &instructions) {
     for (const string &instruction : instructions) {
       cout << instruction << endl;
     }
   }
-	
-  void printPlainError(const string &error) { cout << error << endl; }
 };
 
 #endif

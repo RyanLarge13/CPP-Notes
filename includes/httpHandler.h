@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <variant>
 
 #include "./colors.h"
 
@@ -13,27 +14,29 @@ using json = nlohmann::json;
 #ifndef HTTP_HANDLER_H
 #define HTTP_HANDLER_H
 class HttpHandler {
- public:
+public:
   struct HttpResponse {
     CURLcode curlCode;
     long httpCode;
-    json body;
+    variant<json, string> body;
 
-    HttpResponse(const CURLcode& curlCode, const long& httpCode,
-                 const json& body)
+    HttpResponse(const CURLcode &curlCode, const long &httpCode,
+                 const variant<string, json> &body)
         : curlCode(curlCode), httpCode(httpCode), body(body) {}
   };
 
- private:
-  CURL* curl = nullptr;
-  curl_slist* jsonHeaders = nullptr;
+  bool handleCurlOrHttpCodeInformation() {}
+
+private:
+  CURL *curl = nullptr;
+  curl_slist *jsonHeaders = nullptr;
   string baseUrl = "https://notesserver-production-9640.up.railway.app";
 
-  static size_t writeCallback(char* contents, size_t size, size_t nmemb,
-                              void* userData) {
+  static size_t writeCallback(char *contents, size_t size, size_t nmemb,
+                              void *userData) {
     size_t totalSize = size * nmemb;
 
-    string* response = static_cast<string*>(userData);
+    string *response = static_cast<string *>(userData);
     response->append(contents, totalSize);
 
     return totalSize;
@@ -43,12 +46,12 @@ class HttpHandler {
     string jsonData;
     bool hasJson;
 
-    JsonData(const string& jsonData, bool hasJson)
+    JsonData(const string &jsonData, bool hasJson)
         : jsonData(jsonData), hasJson(hasJson) {}
   };
 
-  HttpResponse callAPI(const string& url, const JsonData& jsonObj,
-                       const string& httpMethod) {
+  HttpResponse callAPI(const string &url, const JsonData &jsonObj,
+                       const string &httpMethod) {
     curl_easy_reset(curl);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, jsonHeaders);
@@ -71,26 +74,24 @@ class HttpHandler {
     long httpCode = 0;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
 
-    json parsedBody;
-    bool JsonFailed = false;
-
     try {
-      parsedBody = json::parse(responseBody);
+      josn parsedBody = json::parse(responseBody);
       HttpResponse res = HttpResponse(curlStatus, httpCode, parsedBody);
 
       return res;
     } catch (json::parse_error err) {
-      cout << endl << YELLOW + "Json failed to parse!" + ENDCOLOR << endl;
-      cout << endl << err << endl;
+      HttpResponse res = HttpResponse(curlStatus, httpCode, responseBody);
+
+      return res;
     }
   }
 
- public:
+public:
   // JSON values capsule
   struct j {
     string key;
     variant<string, int, bool> value;
-    j(const string& key, const variant<string, int, bool>& value)
+    j(const string &key, const variant<string, int, bool> &value)
         : key(key), value(value) {}
   };
 
@@ -125,9 +126,9 @@ class HttpHandler {
   }
 
   // No copy construction possible for class
-  HttpHandler(const HttpHandler&) = delete;
+  HttpHandler(const HttpHandler &) = delete;
   // No copy assigning either of class
-  HttpHandler& operator=(const HttpHandler&) = delete;
+  HttpHandler &operator=(const HttpHandler &) = delete;
 
   ~HttpHandler() {
     curl_slist_free_all(jsonHeaders);
@@ -139,42 +140,42 @@ class HttpHandler {
     curl_global_cleanup();
   }
 
-  string serializeJsonString(const string& jsonString) {
+  string serializeJsonString(const string &jsonString) {
     string newString = "";
     for (char ch : jsonString) {
       switch (ch) {
-        case '"':
-          newString += '\\';
-          newString += ch;
-          break;
-        case '\\':
-          newString += '\\';
-          newString += ch;
-          break;
-        case '\n':
-          newString += "\\n";
-          break;
-        case '\t':
-          newString += "\\t";
-          break;
-        case '\r':
-          newString += "\\r";
-          break;
-        default:
-          newString += ch;
-          break;
+      case '"':
+        newString += '\\';
+        newString += ch;
+        break;
+      case '\\':
+        newString += '\\';
+        newString += ch;
+        break;
+      case '\n':
+        newString += "\\n";
+        break;
+      case '\t':
+        newString += "\\t";
+        break;
+      case '\r':
+        newString += "\\r";
+        break;
+      default:
+        newString += ch;
+        break;
       }
     }
 
     return newString;
   }
 
-  string buildJson(const vector<j>& json) {
+  string buildJson(const vector<j> &json) {
     string jsonString = "{";
 
-    for (const j& keyValue : json) {
-      const string& key = keyValue.key;
-      const variant<string, int, bool>& value = keyValue.value;
+    for (const j &keyValue : json) {
+      const string &key = keyValue.key;
+      const variant<string, int, bool> &value = keyValue.value;
 
       jsonString += "\"" + serializeJsonString(key) + "\": ";
 
@@ -196,7 +197,7 @@ class HttpHandler {
     return jsonString;
   }
 
-  HttpResponse saveNote(const string& note, const string& title, int folderId,
+  HttpResponse saveNote(const string &note, const string &title, int folderId,
                         bool locked) {
     string url = baseUrl + "/notes/create";
 
@@ -209,8 +210,8 @@ class HttpHandler {
     return res;
   }
 
-  HttpResponse login(const string& username, const string& email,
-                     const string& password) {
+  HttpResponse login(const string &username, const string &email,
+                     const string &password) {
     string url = baseUrl + "/users/login";
 
     vector<j> json = {j("username", username), j("email", email),
@@ -222,5 +223,11 @@ class HttpHandler {
     return res;
   }
 };
+
+HttpResponse getUserData(const string &token) {
+  string url = baseUrl + "/users/data";
+  HttpResponse res = callAPI(url, JsonData("", false), "GET");
+  return res;
+}
 
 #endif
