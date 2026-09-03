@@ -349,6 +349,19 @@ private:
   }
 
 public:
+  struct User {
+    const string &userid;
+    const string &username;
+    const string &email;
+    const string &token;
+
+    User(const string &userid, const string &username, const string &email,
+         const string &token)
+        : userid(userid), username(username), email(email), token(token) {}
+  };
+
+  static User globalUser;
+
   bool changeUsername(vector<string> &userInfo) {
     cout << "Okay, let's change your username. To exit, simply type your "
             "current username when asked to give a new one"
@@ -611,6 +624,19 @@ public:
     return 1;
   }
 
+  void manageUser(const string &token, const json &user) {
+    // user = userid, username, email, createdat
+    // also save token, but make sure it is serialized
+
+    const string &userid = user["userid"].get<string>();
+    const string &username = user["username"].get<string>();
+    const string &email = user["email"].get<email>();
+
+    globalUser = User(userid, username, email, token);
+  }
+
+  void manageUserData(const json &folders, const json &notes) {}
+
   void grabServerData(const string &token, const HttpHandler &httpHandler) {
     HttpHandler::HttpResponse res = httpHandler.getUserData(token);
 
@@ -641,6 +667,9 @@ public:
     json &user = body["data"]["user"].get<json>();
     json &folders = body["data"]["folders"].get<json>();
     json &notes = body["data"]["notes"].get<json>();
+
+    manageUser(user);
+    manageUserData(folders, notes);
   }
 
   void loginServer() {
