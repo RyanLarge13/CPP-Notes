@@ -1,3 +1,5 @@
+#include "../common/exceptionHandlerInstance.h"
+#include "../common/ioHandlerInstance.h"
 #include <curl/curl.h>
 
 #include <iostream>
@@ -25,7 +27,56 @@ public:
         : curlCode(curlCode), httpCode(httpCode), body(body) {}
   };
 
-  bool handleCurlOrHttpCodeInformation() {}
+  void printHttpError(long httpCode) {
+    switch (httpCode) {
+    case 400:
+      exceptionHandler.printPlainError(
+          YELLOW + "Server returned a bad reqeust code: " + httpCode +
+          "status code" + ENDCOLOR +
+          ". Please make sure you are sending valid data");
+      break;
+    case 401:
+      exceptionHandler.printPlainError(
+          YELLOW + "Server returned an unauthroied code: " + httpCode +
+          "status code" + ENDCOLOR +
+          ". Check your credentials. Try to login again");
+      break;
+    case 404:
+      exceptionHandler.printPlainError(
+          YELLOW + "Server returned a bad reqeust code: " + httpCode +
+          "status code" + ENDCOLOR +
+          ". Please make sure you are sending all of the information and valid "
+          "information to complete this request");
+      break;
+    case 500:
+      exceptionHandler.printPlainError(
+          YELLOW + "Server returned a server error code: " + httpCode +
+          "status code" + ENDCOLOR + ". Contact developer at" + BLUE +
+          "ryanlarge@ryanlarge.dev" + ENDCOLOR);
+      break;
+    default:
+      exceptionHandler.printPlainError(YELLOW + "Server returned a " +
+                                       httpCode + "status code" + ENDCOLOR);
+      break;
+    }
+  }
+
+  // Return true if server call did not succeed or server returned some kind of
+  // bad http request/failure
+  bool handleCurlOrHttpCodeInformation(CURLcode curlCode, long httpCode) {
+    if (curlCode != CURL_OK) {
+      throw runtime_error("Curl failed to call to the server. Inside "
+                          "handleCurlOrHttpCodeInformation. Check to see what "
+                          "api call was last ran");
+    }
+
+    if (httpCode > 399) {
+      printHttpError(httpCode);
+      return true;
+    }
+
+    return false;
+  }
 
 private:
   CURL *curl = nullptr;

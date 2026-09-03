@@ -614,11 +614,33 @@ public:
   void grabServerData(const string &token, const HttpHandler &httpHandler) {
     HttpHandler::HttpResponse res = httpHandler.getUserData(token);
 
-    if (!res.curlCode) {
+    bool didFail =
+        httpHandler.handleCurlOrHttpCodeInformation(res.curlCode, res.httpCode);
+
+    if (didFail) {
+      string messageFromServer = res.body["data"]["message"].get<string>();
+
+      if (messageFromServer) {
+        exceptionHandler.printPlainError(
+            "You have a message from the server involving your last request: " +
+            YELLOW + messageFromServer + ENDCOLOR);
+      }
+
+      return;
     }
 
-    if (res.httpCode < 200 || res.httpCode > 399) {
+    if (has_alternative<string>(res.body)) {
+      exceptionHandler.printStringResBody(res.httpCode, res.body);
+      return;
     }
+
+    // Lots of json for days here. Don't forget to use references with & and
+    // .get<...>(); for extracting values correctly
+    const json &body = get<json>(res.body);
+
+    json &user = body["data"]["user"].get<json>();
+    json &folders = body["data"]["folders"].get<json>();
+    json &notes = body["data"]["notes"].get<json>();
   }
 
   void loginServer() {
@@ -648,7 +670,20 @@ public:
     HttpHandler::HttpResponse res =
         httpHandler.login(username, email, password);
 
-    // Don't forget to catch errors here!
+    bool didFail =
+        httpHandler.handleCurlOrHttpCodeInformation(res.curlCode, res.httpCode);
+
+    if (didFail) {
+      string messageFromServer = res.body["data"]["message"].get<string>();
+
+      if (messageFromServer) {
+        exceptionHandler.printPlainError(
+            "You have a message from the server involving your last request: " +
+            YELLOW + messageFromServer + ENDCOLOR);
+      }
+
+      return;
+    }
 
     if (has_alternative<string>(res.body)) {
       exceptionHandler.printStringResBody(res.httpCode, res.body);
