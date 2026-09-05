@@ -20,7 +20,7 @@ class HttpHandler {
   struct HttpResponse {
     CURLcode curlCode;
     long httpCode;
-    const variant<json, string>& body;
+    variant<json, string> body;
 
     HttpResponse(CURLcode curlCode, long httpCode,
                  const variant<json, string>& body)
@@ -37,9 +37,9 @@ class HttpHandler {
         break;
       case 401:
         exceptionHandler.printPlainError(
-            YELLOW + "Server returned an unauthroied code: " +
-            to_string(httpCode) + "status code" + ENDCOLOR +
-            ". Check your credentials. Try to login again");
+            YELLOW +
+            "Server returned an unauthroized code: " + to_string(httpCode) +
+            ENDCOLOR + ". Check your credentials. Try to login again");
         break;
       case 404:
         exceptionHandler.printPlainError(
@@ -134,7 +134,7 @@ class HttpHandler {
       HttpResponse res = HttpResponse(curlStatus, httpCode, parsedBody);
 
       return res;
-    } catch (json::parse_error err) {
+    } catch (const json::parse_error& err) {
       HttpResponse res = HttpResponse(curlStatus, httpCode, responseBody);
 
       return res;

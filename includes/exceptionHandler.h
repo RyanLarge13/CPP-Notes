@@ -32,7 +32,7 @@ class ExceptionHandler {
     }
   }
 
-  void printPlainError(const string& error) { cout << error << endl; }
+  void printPlainError(const string& error) { cout << error << endl << endl; }
 
   void printStringResBody(long httpCode, const string& body) {
     string errStr = "\\n\\n" + YELLOW + "HTTP status code: \\n" + ENDCOLOR +
@@ -44,7 +44,7 @@ class ExceptionHandler {
 
   void printInstructions(const vector<string>& instructions) {
     for (const string& instruction : instructions) {
-      cout << instruction << endl;
+      cout << instruction << endl << endl;
     }
   }
 };

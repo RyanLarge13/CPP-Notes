@@ -18,7 +18,7 @@ class IoHandler {
     bool input = true;
     T answer;
     for (const string& text : texts) {
-      cout << text << endl;
+      cout << text << endl << endl;
     }
     cout << question;
     while (input) {
@@ -26,7 +26,7 @@ class IoHandler {
       if (cin.fail()) {
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << endl << reply << endl;
+        cout << endl << reply << endl << endl;
         input = false;
       }
       input = false;
@@ -38,7 +38,7 @@ class IoHandler {
                                 const string& question) {
     string answer;
 
-    for (const string& text : texts) cout << text << endl;
+    for (const string& text : texts) cout << text << endl << endl;
 
     cout << question;
     getline(cin >> ws, answer);

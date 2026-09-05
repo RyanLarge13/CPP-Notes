@@ -694,7 +694,6 @@ class ConfigManager {
     string email = ioHandler.getInput<string>(
         {"What is your email associated with your account?"},
         "Email: ", "Please provide a valid email");
-
     string password = ioHandler.getInput<string>(
         {"What is your password associated with your account?"},
         "Password: ", "Plese input a valid password");
@@ -705,28 +704,32 @@ class ConfigManager {
 
     bool didFail =
         httpHandler.handleCurlOrHttpCodeInformation(res.curlCode, res.httpCode);
+    bool resBodyIsStringType = holds_alternative<string>(res.body);
 
     if (didFail) {
       const json& body = get<json>(res.body);
-      string messageFromServer = body["data"]["message"].get<string>();
+
+      string messageFromServer = "";
+
+      if (body.contains("message")) {
+        messageFromServer = body["message"].get<string>();
+      }
 
       if (messageFromServer.size() > 0) {
         exceptionHandler.printPlainError(
             "You have a message from the server involving your last request: " +
             YELLOW + messageFromServer + ENDCOLOR);
       }
-
-      return;
     }
 
-    if (holds_alternative<string>(res.body)) {
-      const json& body = get<string>(res.body);
+    if (resBodyIsStringType) {
+      const string& body = get<string>(res.body);
       exceptionHandler.printStringResBody(res.httpCode, body);
       return;
     }
 
     const json& body = get<json>(res.body);
-    const string& token = body["data"]["token"].get<string>();
+    const string& token = body["data"].get<string>();
 
     grabServerData(token, httpHandler);
   }
