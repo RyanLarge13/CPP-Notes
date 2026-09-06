@@ -27,6 +27,29 @@ class HttpHandler {
         : curlCode(curlCode), httpCode(httpCode), body(body) {}
   };
 
+  void showServerErrorMessage(const HttpResponse& res,
+                              bool resBodyIsStringType) {
+    if (resBodyIsStringType) {
+      const string& body = get<string>(res.body);
+      exceptionHandler.printStringResBody(res.httpCode, body);
+      return;
+    }
+
+    const json& body = get<json>(res.body);
+
+    string messageFromServer = "";
+
+    if (body.contains("message")) {
+      messageFromServer = body["message"].get<string>();
+    }
+
+    if (messageFromServer.size() > 0) {
+      exceptionHandler.printPlainError(
+          "You have a message from the server involving your last request: " +
+          YELLOW + messageFromServer + ENDCOLOR);
+    }
+  }
+
   void printHttpError(long httpCode) {
     switch (httpCode) {
       case 400:
@@ -139,6 +162,25 @@ class HttpHandler {
 
       return res;
     }
+  }
+
+  void buildResponseObject(const HttpResponse& res) {
+    bool didFail =
+        httpHandler.handleCurlOrHttpCodeInformation(res.curlCode, res.httpCode);
+    bool resBodyIsStringType = holds_alternative<string>(res.body);
+    // Check if both message error message success and res body is string
+    string resBodyString = "";
+
+    if (resBodyIsStringType) {
+      resBodyString = get<string>(res.body);
+    }
+
+    if (!holds_alternative<json>(res.body)) {
+      // what to do??
+    }
+
+    const json& jsonBody = get<json>(res.body);
+    return;  // obj;
   }
 
  public:
@@ -279,7 +321,7 @@ class HttpHandler {
   }
 
   HttpResponse getUserData(const string& token) {
-    string url = baseUrl + "/users/data";
+    string url = baseUrl + "/users/seperated/data";
     HttpResponse res = callAPI(url, JsonData("", false), "GET");
     return res;
   }

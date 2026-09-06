@@ -644,21 +644,14 @@ class ConfigManager {
 
     bool didFail =
         httpHandler.handleCurlOrHttpCodeInformation(res.curlCode, res.httpCode);
+    bool resBodyIsStringType = holds_alternative<string>(res.body);
 
     if (didFail) {
-      const json& body = get<json>(res.body);
-      const string& messageFromServer = body["data"]["message"].get<string>();
-
-      if (messageFromServer.size() > 0) {
-        exceptionHandler.printPlainError(
-            "You have a message from the server involving your last request: " +
-            YELLOW + messageFromServer + ENDCOLOR);
-      }
-
+      httpHandler.showServerErrorMessage(res, resBodyIsStringType);
       return;
     }
 
-    if (holds_alternative<string>(res.body)) {
+    if (resBodyIsStringType) {
       const json& body = get<json>(res.body);
       exceptionHandler.printStringResBody(res.httpCode, body);
       return;
@@ -707,19 +700,8 @@ class ConfigManager {
     bool resBodyIsStringType = holds_alternative<string>(res.body);
 
     if (didFail) {
-      const json& body = get<json>(res.body);
-
-      string messageFromServer = "";
-
-      if (body.contains("message")) {
-        messageFromServer = body["message"].get<string>();
-      }
-
-      if (messageFromServer.size() > 0) {
-        exceptionHandler.printPlainError(
-            "You have a message from the server involving your last request: " +
-            YELLOW + messageFromServer + ENDCOLOR);
-      }
+      httpHandler.showServerErrorMessage(res, resBodyIsStringType);
+      return;
     }
 
     if (resBodyIsStringType) {
