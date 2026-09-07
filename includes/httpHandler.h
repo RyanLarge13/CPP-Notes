@@ -16,74 +16,51 @@ using json = nlohmann::json;
 #ifndef HTTP_HANDLER_H
 #define HTTP_HANDLER_H
 class HttpHandler {
-public:
+ public:
   struct HttpResponse {
     CURLcode curlCode;
     long httpCode;
     variant<json, string> body;
 
     HttpResponse(CURLcode curlCode, long httpCode,
-                 const variant<json, string> &body)
+                 const variant<json, string>& body)
         : curlCode(curlCode), httpCode(httpCode), body(body) {}
   };
 
-  void showServerErrorMessage(const HttpResponse &res,
-                              bool resBodyIsStringType) {
-    if (resBodyIsStringType) {
-      const string &body = get<string>(res.body);
-      exceptionHandler.printStringResBody(res.httpCode, body);
-      return;
-    }
-
-    const json &body = get<json>(res.body);
-
-    string messageFromServer = "";
-
-    if (body.contains("message")) {
-      messageFromServer = body["message"].get<string>();
-    }
-
-    if (messageFromServer.size() > 0) {
-      exceptionHandler.printPlainError(
-          "You have a message from the server involving your last request: " +
-          YELLOW + messageFromServer + ENDCOLOR);
-    }
-  }
-
   void printHttpError(long httpCode) {
     switch (httpCode) {
-    case 400:
-      exceptionHandler.printPlainError(
-          YELLOW + "Server returned a bad reqeust code: " +
-          to_string(httpCode) + "status code" + ENDCOLOR +
-          ". Please make sure you are sending valid data");
-      break;
-    case 401:
-      exceptionHandler.printPlainError(
-          YELLOW +
-          "Server returned an unauthroized code: " + to_string(httpCode) +
-          ENDCOLOR + ". Check your credentials. Try to login again");
-      break;
-    case 404:
-      exceptionHandler.printPlainError(
-          YELLOW + "Server returned a bad reqeust code: " +
-          to_string(httpCode) + "status code" + ENDCOLOR +
-          ". Please make sure you are sending all of the information and "
-          "valid "
-          "information to complete this request");
-      break;
-    case 500:
-      exceptionHandler.printPlainError(
-          YELLOW +
-          "Server returned a server error code: " + to_string(httpCode) +
-          "status code" + ENDCOLOR + ". Contact developer at" + BLUE +
-          "ryanlarge@ryanlarge.dev" + ENDCOLOR);
-      break;
-    default:
-      exceptionHandler.printPlainError(YELLOW + "Server returned a " +
-                                       to_string(httpCode) + "status code" +
-                                       ENDCOLOR);
-      break;
+      case 400:
+        exceptionHandler.printPlainError(
+            YELLOW + "Server returned a bad reqeust code: " +
+            to_string(httpCode) + "status code" + ENDCOLOR +
+            ". Please make sure you are sending valid data");
+        break;
+      case 401:
+        exceptionHandler.printPlainError(
+            YELLOW +
+            "Server returned an unauthroized code: " + to_string(httpCode) +
+            ENDCOLOR + ". Check your credentials. Try to login again");
+        break;
+      case 404:
+        exceptionHandler.printPlainError(
+            YELLOW + "Server returned a bad reqeust code: " +
+            to_string(httpCode) + "status code" + ENDCOLOR +
+            ". Please make sure you are sending all of the information and "
+            "valid "
+            "information to complete this request");
+        break;
+      case 500:
+        exceptionHandler.printPlainError(
+            YELLOW +
+            "Server returned a server error code: " + to_string(httpCode) +
+            "status code" + ENDCOLOR + ". Contact developer at" + BLUE +
+            "ryanlarge@ryanlarge.dev" + ENDCOLOR);
+        break;
+      default:
+        exceptionHandler.printPlainError(YELLOW + "Server returned a " +
+                                         to_string(httpCode) + "status code" +
+                                         ENDCOLOR);
+        break;
     }
   }
 
@@ -91,9 +68,10 @@ public:
   // bad http request/failure
   bool handleCurlOrHttpCodeInformation(CURLcode curlCode, long httpCode) {
     if (curlCode != CURLE_OK) {
-      throw runtime_error("Curl failed to call to the server. Inside "
-                          "handleCurlOrHttpCodeInformation. Check to see what "
-                          "api call was last ran");
+      throw runtime_error(
+          "Curl failed to call to the server. Inside "
+          "handleCurlOrHttpCodeInformation. Check to see what "
+          "api call was last ran");
     }
 
     if (httpCode > 399) {
@@ -104,16 +82,16 @@ public:
     return false;
   }
 
-private:
-  CURL *curl = nullptr;
-  curl_slist *jsonHeaders = nullptr;
+ private:
+  CURL* curl = nullptr;
+  curl_slist* jsonHeaders = nullptr;
   string baseUrl = "https://notesserver-production-9640.up.railway.app";
 
-  static size_t writeCallback(char *contents, size_t size, size_t nmemb,
-                              void *userData) {
+  static size_t writeCallback(char* contents, size_t size, size_t nmemb,
+                              void* userData) {
     size_t totalSize = size * nmemb;
 
-    string *response = static_cast<string *>(userData);
+    string* response = static_cast<string*>(userData);
     response->append(contents, totalSize);
 
     return totalSize;
@@ -123,10 +101,11 @@ private:
     string jsonData;
     bool hasJson;
 
-    JsonData(const string &jsonData, bool hasJson)
+    JsonData(const string& jsonData, bool hasJson)
         : jsonData(jsonData), hasJson(hasJson) {}
   };
 
+ public:
   struct ResponseObject {
     bool bodyIsString;
     bool bodyIsJson;
@@ -137,15 +116,51 @@ private:
     long httpCode;
 
     ResponseObject(bool bodyIsString, bool bodyIsJson, bool didFail,
-                   const string &messageFromServer, const string &resBodyString,
-                   const json &resBodyJson, long httpCode)
-        : bodyIsString(bodyIsString), bodyIsJson(bodyIsJson), didFail(didFail),
-          messageFromServer(messageFromServer), resBodyString(resBodyString),
-          resBodyJson(resBodyJson), httpCode(httpCode) {}
+                   const string& messageFromServer, const string& resBodyString,
+                   const json& resBodyJson, long httpCode)
+        : bodyIsString(bodyIsString),
+          bodyIsJson(bodyIsJson),
+          didFail(didFail),
+          messageFromServer(messageFromServer),
+          resBodyString(resBodyString),
+          resBodyJson(resBodyJson),
+          httpCode(httpCode) {}
   };
 
-  HttpResponse callAPI(const string &url, const JsonData &jsonObj,
-                       const string &httpMethod) {
+ private:
+  // Returns a clean sheet of server response
+  // information along with prints only http code specifics
+  ResponseObject buildResponseObject(const HttpResponse& res) {
+    bool didFail = handleCurlOrHttpCodeInformation(res.curlCode, res.httpCode);
+    bool resBodyIsStringType = holds_alternative<string>(res.body);
+
+    string resBodyString = "";
+
+    if (resBodyIsStringType) {
+      resBodyString = get<string>(res.body);
+    }
+
+    if (!holds_alternative<json>(res.body)) {
+      return ResponseObject(resBodyIsStringType, !resBodyIsStringType, didFail,
+                            "", resBodyString, json::object(), res.httpCode);
+    }
+
+    const json& jsonBody = get<json>(res.body);
+
+    string messageFromServer = "";
+
+    if (jsonBody.contains("message")) {
+      messageFromServer = "You have a message from the server: " +
+                          jsonBody["message"].get<string>();
+    }
+
+    return ResponseObject(resBodyIsStringType, !resBodyIsStringType, didFail,
+                          messageFromServer, resBodyString, jsonBody,
+                          res.httpCode);
+  }
+
+  ResponseObject callAPI(const string& url, const JsonData& jsonObj,
+                         const string& httpMethod) {
     curl_easy_reset(curl);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, jsonHeaders);
@@ -170,50 +185,20 @@ private:
 
     try {
       json parsedBody = json::parse(responseBody);
-      HttpResponse res = HttpResponse(curlStatus, httpCode, parsedBody);
-
-      return res;
-    } catch (const json::parse_error &err) {
-      HttpResponse res = HttpResponse(curlStatus, httpCode, responseBody);
-
-      return res;
+      return buildResponseObject(
+          HttpResponse(curlStatus, httpCode, parsedBody));
+    } catch (const json::parse_error& err) {
+      return buildResponseObject(
+          HttpResponse(curlStatus, httpCode, responseBody));
     }
   }
 
-  ResponseObject buildResponseObject(const HttpResponse &res) {
-    bool didFail =
-        httpHandler.handleCurlOrHttpCodeInformation(res.curlCode, res.httpCode);
-    bool resBodyIsStringType = holds_alternative<string>(res.body);
-    // Check if both message error message success and res body is string
-    string resBodyString = "";
-
-    if (resBodyIsStringType) {
-      resBodyString = get<string>(res.body);
-    }
-
-    if (!holds_alternative<json>(res.body)) {
-      // what to do??
-    }
-
-    const json &jsonBody = get<json>(res.body);
-
-    string messageFromServer = "";
-
-    if (jsonBody.contains("message")) {
-      messageFromServer = jsonBody["message"].get<string>();
-    }
-
-    return ResponseObject(resBodyIsStringType, !resBodyIsStringType, didFail,
-                          messageFromServer, resBodyString, jsonBody,
-                          res.httpCode);
-  }
-
-public:
+ public:
   // JSON values capsule
   struct j {
     string key;
     variant<string, int, bool> value;
-    j(const string &key, const variant<string, int, bool> &value)
+    j(const string& key, const variant<string, int, bool>& value)
         : key(key), value(value) {}
   };
 
@@ -248,9 +233,9 @@ public:
   }
 
   // No copy construction possible for class
-  HttpHandler(const HttpHandler &) = delete;
+  HttpHandler(const HttpHandler&) = delete;
   // No copy assigning either of class
-  HttpHandler &operator=(const HttpHandler &) = delete;
+  HttpHandler& operator=(const HttpHandler&) = delete;
 
   ~HttpHandler() {
     curl_slist_free_all(jsonHeaders);
@@ -262,42 +247,42 @@ public:
     curl_global_cleanup();
   }
 
-  string serializeJsonString(const string &jsonString) {
+  string serializeJsonString(const string& jsonString) {
     string newString = "";
     for (char ch : jsonString) {
       switch (ch) {
-      case '"':
-        newString += '\\';
-        newString += ch;
-        break;
-      case '\\':
-        newString += '\\';
-        newString += ch;
-        break;
-      case '\n':
-        newString += "\\n";
-        break;
-      case '\t':
-        newString += "\\t";
-        break;
-      case '\r':
-        newString += "\\r";
-        break;
-      default:
-        newString += ch;
-        break;
+        case '"':
+          newString += '\\';
+          newString += ch;
+          break;
+        case '\\':
+          newString += '\\';
+          newString += ch;
+          break;
+        case '\n':
+          newString += "\\n";
+          break;
+        case '\t':
+          newString += "\\t";
+          break;
+        case '\r':
+          newString += "\\r";
+          break;
+        default:
+          newString += ch;
+          break;
       }
     }
 
     return newString;
   }
 
-  string buildJson(const vector<j> &json) {
+  string buildJson(const vector<j>& json) {
     string jsonString = "{";
 
-    for (const j &keyValue : json) {
-      const string &key = keyValue.key;
-      const variant<string, int, bool> &value = keyValue.value;
+    for (const j& keyValue : json) {
+      const string& key = keyValue.key;
+      const variant<string, int, bool>& value = keyValue.value;
 
       jsonString += "\"" + serializeJsonString(key) + "\": ";
 
@@ -319,7 +304,7 @@ public:
     return jsonString;
   }
 
-  ResponseObject saveNote(const string &note, const string &title, int folderId,
+  ResponseObject saveNote(const string& note, const string& title, int folderId,
                           bool locked) {
     string url = baseUrl + "/notes/create";
 
@@ -327,36 +312,30 @@ public:
                       j("folderId", folderId), j("locked", locked)};
     string jsonData = buildJson(json);
 
-    HttpResponse res = callAPI(url, JsonData(jsonData, true), "POST");
+    ResponseObject res = callAPI(url, JsonData(jsonData, true), "POST");
 
-    ResponseObject resObj = buildResponseObject(res);
-
-    return resObj;
+    return res;
   }
 
-  ResponseObject login(const string &username, const string &email,
-                       const string &password) {
+  ResponseObject login(const string& username, const string& email,
+                       const string& password) {
     string url = baseUrl + "/users/login";
 
     vector<j> json = {j("username", username), j("email", email),
                       j("password", password)};
     string jsonData = buildJson(json);
 
-    HttpResponse res = callAPI(url, JsonData(jsonData, true), "POST");
+    ResponseObject res = callAPI(url, JsonData(jsonData, true), "POST");
 
-    ResponseObject resObj = buildResponseObject(res);
-
-    return resObj;
+    return res;
   }
 
-  ResponseObject getUserData(const string &token) {
+  ResponseObject getUserData(const string& token) {
     string url = baseUrl + "/users/seperated/data";
 
-    HttpResponse res = callAPI(url, JsonData("", false), "GET");
+    ResponseObject res = callAPI(url, JsonData("", false), "GET");
 
-    ResponseObject resObj = buildResponseObject(res);
-
-    return resObj;
+    return res;
   }
 };
 

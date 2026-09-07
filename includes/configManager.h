@@ -640,26 +640,21 @@ class ConfigManager {
   void manageUserData(const json& folders, const json& notes) {}
 
   void grabServerData(const string& token, HttpHandler& httpHandler) {
-    HttpHandler::HttpResponse res = httpHandler.getUserData(token);
+    HttpHandler::ResponseObject res = httpHandler.getUserData(token);
 
-    bool didFail =
-        httpHandler.handleCurlOrHttpCodeInformation(res.curlCode, res.httpCode);
-    bool resBodyIsStringType = holds_alternative<string>(res.body);
-
-    if (didFail) {
-      httpHandler.showServerErrorMessage(res, resBodyIsStringType);
+    if (res.messageFromServer.size() > 0) {
+      exceptionHandler.printPlainError(res.resBodyString);
       return;
     }
 
-    if (resBodyIsStringType) {
-      const json& body = get<json>(res.body);
-      exceptionHandler.printStringResBody(res.httpCode, body);
+    if (res.bodyIsString) {
+      exceptionHandler.printStringResBody(res.httpCode, res.resBodyString);
       return;
     }
 
     // Lots of json for days here. Don't forget to use references with & and
     // .get<...>(); for extracting values correctly
-    const json& body = get<json>(res.body);
+    const json& body = res.resBodyJson;
 
     const json& user = body["data"]["user"].get<json>();
     const json& folders = body["data"]["folders"].get<json>();
@@ -692,26 +687,22 @@ class ConfigManager {
         "Password: ", "Plese input a valid password");
 
     HttpHandler httpHandler;
-    HttpHandler::HttpResponse res =
+
+    HttpHandler::ResponseObject res =
         httpHandler.login(username, email, password);
 
-    bool didFail =
-        httpHandler.handleCurlOrHttpCodeInformation(res.curlCode, res.httpCode);
-    bool resBodyIsStringType = holds_alternative<string>(res.body);
-
-    if (didFail) {
-      httpHandler.showServerErrorMessage(res, resBodyIsStringType);
+    if (res.messageFromServer.size() > 0) {
+      exceptionHandler.printPlainError(YELLOW + res.messageFromServer +
+                                       ENDCOLOR);
       return;
     }
 
-    if (resBodyIsStringType) {
-      const string& body = get<string>(res.body);
-      exceptionHandler.printStringResBody(res.httpCode, body);
+    if (res.bodyIsString) {
+      exceptionHandler.printStringResBody(res.httpCode, res.resBodyString);
       return;
     }
 
-    const json& body = get<json>(res.body);
-    const string& token = body["data"].get<string>();
+    const string& token = res.resBodyJson["data"].get<string>();
 
     grabServerData(token, httpHandler);
   }
