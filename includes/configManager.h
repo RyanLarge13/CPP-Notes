@@ -18,8 +18,25 @@ using json = nlohmann::json;
 #define CONFIGMANAGER_H
 
 class ConfigManager {
- private:
-  void confirmPass(const string& password) {
+private:
+  struct User {
+    int userid;
+    int pin;
+    bool loggedIn;
+    const string &token;
+    const string &username;
+    const string &email;
+    const string &mainDir;
+
+    User(int userid, int pin, bool loggedIn, const string &token,
+         const string &username, const string &email, const string &mainDir)
+        : userid(userid), pin(pin), loggedIn(loggedIn), token(token),
+          username(username), email(email), mainDir(mainDir) {}
+  };
+
+  inline static globalUser = User(1, 1234, false, "", "", "", "cpp-notes");
+
+  void confirmPass(const string &password) {
     string confirmPassword = ioHandler.getInput<string>(
         {{"Confirm your password"}},
         "Confirm Password: ", "Please input valid characters");
@@ -63,23 +80,22 @@ class ConfigManager {
           "when calling getUserInfo from inside changeLogin()");
     }
 
-    fstream* file =
+    fstream *file =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "config.yaml");
 
     if (!file) {
       // Do not catch this. Allow dev to fix
-      throw runtime_error(
-          "Dev: opening config.yaml file from inside "
-          "changeLogin is failing. Check for proper routing");
+      throw runtime_error("Dev: opening config.yaml file from inside "
+                          "changeLogin is failing. Check for proper routing");
     }
 
     rows[0] = "logged_in: " + state;
 
     try {
-      for (const string& row : rows) {
+      for (const string &row : rows) {
         *file << row << "\n";
       }
-    } catch (const filesystem_error& err) {
+    } catch (const filesystem_error &err) {
       exceptionHandler.printPlainError(
           "There was a problem writing to your configuration file. Please "
           "check to make sure you have the proper access rights to config.yaml "
@@ -132,11 +148,11 @@ class ConfigManager {
   string createUsername() {
     string username = ioHandler.getInput<string>(
         {{""}}, "Username: ", "Your username must be valid characters");
-    if (!validator.checkValidString(
-            3, 20,
-            {'<', '>', ',', '{', '}', '[', ']', '!', '@', '#', '$', '%', '^',
-             '&', '*', '(', ')', '+', '='},
-            username)) {
+    if (!validator.checkValidString(3, 20,
+                                    {'<', '>', ',', '{', '}', '[', ']', '!',
+                                     '@', '#', '$', '%', '^', '&', '*', '(',
+                                     ')', '+', '='},
+                                    username)) {
       exceptionHandler.printPlainError("Please insert a valid username");
       exceptionHandler.printInstructions(
           {{"- Can ONLY contain:", "  - letters", "  - numbers",
@@ -237,21 +253,36 @@ class ConfigManager {
     return pin;
   };
 
-  bool initializeConfig(const string& username, const string& email,
-                        string password, int pin, const string& mainDir,
-                        ofstream* configFile) {
+  string generateLinuxUUID() {
+    uuid_t uuid;
+    uuid_generate(uuid); // Generates a random or time-based UUID based on
+                         // system capability
+
+    char out[37]; // 36 chars + null terminator
+    uuid_unparse(uuid, out);
+
+    return string(out);
+  }
+
+  bool initializeConfig(const string &username, const string &email,
+                        string password, int pin, const string &mainDir,
+                        ofstream *configFile) {
     if (!configFile) {
       cout << "No config file defined canceling initialize config" << endl;
     }
     if (username.size() < 1 || email.size() < 1 || password.size() < 1 ||
         pin < 1000) {
-      exceptionHandler.printPlainError(
-          "You must complete the registration "
-          "process before creating a new "
-          "account");
+      exceptionHandler.printPlainError("You must complete the registration "
+                                       "process before creating a new "
+                                       "account");
       configFile->close();
       return false;
     }
+
+    string userid = generateLinuxUUID();
+
+    *configFile << "userid: " << userid << "\n";
+    *configFile << "token: " << "" << "\n";
     *configFile << "logged_in: " << "true" << "\n";
     *configFile << "username: " << username << "\n";
     *configFile << "email: " << email << "\n";
@@ -262,7 +293,7 @@ class ConfigManager {
     return true;
   }
 
-  string getNewUsername(const string& currentUsername) {
+  string getNewUsername(const string &currentUsername) {
     const string newUsername = ioHandler.getInput<string>(
         {{"Type your current username again to cancel and return to the "
           "main "
@@ -296,7 +327,7 @@ class ConfigManager {
     return newUsername;
   }
 
-  string getNewPass(const string& currentPass) {
+  string getNewPass(const string &currentPass) {
     const string newPass = ioHandler.getInput<string>(
         {{""}}, "New password: ", "Please provide a valid response");
     if (newPass == currentPass) {
@@ -313,7 +344,7 @@ class ConfigManager {
     return newPass;
   }
 
-  int getNewPin(const int& currentPin) {
+  int getNewPin(const int &currentPin) {
     const int newPin =
         ioHandler.getInput<int>({{"Enter your original pin value to cancel and "
                                   "return to the main menu"}},
@@ -332,13 +363,15 @@ class ConfigManager {
     return newPin;
   }
 
-  bool updateConfig(const vector<string>& userInfo) {
-    fstream* config =
+  bool updateConfig(const vector<string> &userInfo) {
+    fstream *config =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
     if (!config) {
       delete config;
       return false;
     }
+    *config << "userid: " << "" << "\n";
+    *config << "token: " << "" << "\n";
     *config << "logged_in: " << "true" << "\n";
     *config << "username: " << userInfo[1] << "\n";
     *config << "email: " << userInfo[2] << "\n";
@@ -350,21 +383,8 @@ class ConfigManager {
     return true;
   }
 
- public:
-  struct User {
-    string userid;
-    string username;
-    string email;
-    string token;
-
-    User(const string& userid, const string& username, const string& email,
-         const string& token)
-        : userid(userid), username(username), email(email), token(token) {}
-  };
-
-  inline static User globalUser = User("0", "", "", "");
-
-  bool changeUsername(vector<string>& userInfo) {
+public:
+  bool changeUsername(vector<string> &userInfo) {
     cout << "Okay, let's change your username. To exit, simply type your "
             "current username when asked to give a new one"
          << endl;
@@ -393,7 +413,7 @@ class ConfigManager {
     return didUpdate;
   }
 
-  bool changePass(vector<string>& userInfo) {
+  bool changePass(vector<string> &userInfo) {
     const string currentPass = userInfo[3];
     cout << "Okay, let's change your password. To cancel and return to main "
             "menu type in your current password again when asked for a new "
@@ -421,7 +441,7 @@ class ConfigManager {
     return didUpdate;
   }
 
-  bool changePin(vector<string>& userInfo) {
+  bool changePin(vector<string> &userInfo) {
     const int currentPin = stoi(userInfo[4]);
     cout << "Okay, sounds good. let's change your pin for logging in and "
             "opening locked notes"
@@ -449,7 +469,7 @@ class ConfigManager {
     return configUpdated;
   }
 
-  bool changeDir(vector<string>& userInfo) {
+  bool changeDir(vector<string> &userInfo) {
     const string currentMainDir = userInfo[5];
     cout << "Okay, let's change the directory name that you store your "
             "folders "
@@ -499,7 +519,7 @@ class ConfigManager {
     return false;
   }
 
-  bool nameMainDir(const string& dirname) {
+  bool nameMainDir(const string &dirname) {
     bool newDirCreated = fileManager.createNewDir(dirname);
     if (!newDirCreated) {
       exceptionHandler.printPlainError(
@@ -512,7 +532,7 @@ class ConfigManager {
   }
 
   vector<string> getUserInfo(bool rawData) {
-    fstream* file =
+    fstream *file =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
     if (!file) {
       delete file;
@@ -552,16 +572,16 @@ class ConfigManager {
     return rows;
   }
 
-  ifstream* checkForLocalConfigFile(const string& fileName) {
-    ifstream* fileExists = fileManager.checkExistingFile(fileName);
+  ifstream *checkForLocalConfigFile(const string &fileName) {
+    ifstream *fileExists = fileManager.checkExistingFile(fileName);
     if (!fileExists) {
       return nullptr;
     }
     return fileExists;
   }
 
-  ofstream* createConfigFile(const string& fileName) {
-    ofstream* newConfig = fileManager.createNewFile(fileName);
+  ofstream *createConfigFile(const string &fileName) {
+    ofstream *newConfig = fileManager.createNewFile(fileName);
     if (!newConfig) {
       delete newConfig;
       bool userInput = exceptionHandler.handleError(
@@ -626,20 +646,29 @@ class ConfigManager {
     return 1;
   }
 
-  void manageUser(const string& token, const json& user) {
+  void manageUser(const string &token, const json &user) {
     // user = userid, username, email, createdat
     // also save token, but make sure it is serialized
 
-    const string& userid = user["userid"].get<string>();
-    const string& username = user["username"].get<string>();
-    const string& email = user["email"].get<string>();
+    if (!exceptionHandler.containsAll({"userid", "username", "email"}, user)) {
+      exceptionHandler.printPlainError(
+          "There was a problem grabbing your information from the server");
+      // Do something
+    }
 
-    globalUser = User(userid, username, email, token);
+    const string &userid = user["userid"].get<string>();
+    const string &username = user["username"].get<string>();
+    const string &email = user["email"].get<string>();
+
+    // At some point call update config
+
+    globalUser = User(userid, username, email,
+                      token); // Do I want this. What about userData?
   }
 
-  void manageUserData(const json& folders, const json& notes) {}
+  void manageUserData(const json &folders, const json &notes) {}
 
-  void grabServerData(const string& token, HttpHandler& httpHandler) {
+  void grabServerData(const string &token, HttpHandler &httpHandler) {
     HttpHandler::ResponseObject res = httpHandler.getUserData(token);
 
     if (res.messageFromServer.size() > 0) {
@@ -663,16 +692,19 @@ class ConfigManager {
 
     // Check if all pass contains()
     // make a helper function
-    const json& body = res.resBodyJson;
-    const json& data = body["data"].get<json>();
+    const json &body = res.resBodyJson;
+    const json &data = body["data"].get<json>();
 
     if (!exceptionHandler.containsAll({"user", "folders", "notes"}, data)) {
+      exceptionHandler.printPlainError(
+          "There was a problem fetching your data from the server. Please try "
+          "again later");
       return;
     }
 
-    const json& user = body["data"]["user"].get<json>();
-    const json& folders = body["data"]["folders"].get<json>();
-    const json& notes = body["data"]["notes"].get<json>();
+    const json &user = data["user"].get<json>();
+    const json &folders = data["folders"].get<json>();
+    const json &notes = data["notes"].get<json>();
 
     manageUser(token, user);
     manageUserData(folders, notes);
@@ -722,7 +754,7 @@ class ConfigManager {
 
       // This config opening is also in main.cpp checkForAccount(). Lets build a
       // method in config for it
-      ofstream* newConfig =
+      ofstream *newConfig =
           createConfigFile(fileManager.HOME_DIR + "/config.yaml");
 
       if (!newConfig) {
@@ -744,14 +776,14 @@ class ConfigManager {
       return;
     }
 
-    const string& token = res.resBodyJson["data"].get<string>();
+    const string &token = res.resBodyJson["data"].get<string>();
 
     grabServerData(token, httpHandler);
   }
 
   // Create or login to existing account for Electron/ Native Notes
   // ---------------------------
-  void createAccount(ofstream* configFile) {
+  void createAccount(ofstream *configFile) {
     cout << "Let's create an account" << endl
          << endl
          << YELLOW + "Welcome to CPP-Notes" + ENDCOLOR << endl
@@ -771,10 +803,13 @@ class ConfigManager {
       return;
     }
 
+    // User does not have an account with the sister applications so they need
+    // to create brand new
     string newName = createUsername();
     string newEmail = createEmail();
     string newPassword = createPassword();
     int newPin = createPin();
+
     string mainDir = ioHandler.getInput<string>(
         {{"\nWe will be storing all of your notes at the root of your "
           "system "
@@ -783,10 +818,12 @@ class ConfigManager {
         "Main directory: ",
         "Please provide a valid name for this new directory");
     bool newMainDir = nameMainDir("/" + mainDir);
+
     if (!newMainDir) {
       // Handle try again logic this is necessary
       return;
     }
+
     bool configInitialized = initializeConfig(newName, newEmail, newPassword,
                                               newPin, mainDir, configFile);
     if (configInitialized) {
@@ -809,10 +846,10 @@ class ConfigManager {
     }
   }
 
-  void finishCreatingAccount(vector<string>& currentData) {
+  void finishCreatingAccount(vector<string> &currentData) {
     size_t length = currentData.size();
     if (length < 1) {
-      ofstream* newConfig =
+      ofstream *newConfig =
           createConfigFile(fileManager.HOME_DIR + "/" + "config.yaml");
       createAccount(newConfig);
       delete newConfig;
@@ -864,7 +901,7 @@ class ConfigManager {
       finishCreatingAccount(currentData);
     }
     if (length >= 6) {
-      ofstream* configFile =
+      ofstream *configFile =
           fileManager.createNewFile(fileManager.HOME_DIR + "/" + "config.yaml");
       bool configInitialized =
           initializeConfig(currentData[1], currentData[2], currentData[3],
@@ -936,7 +973,7 @@ class ConfigManager {
       }
 
       return true;
-    } catch (const filesystem_error& err) {
+    } catch (const filesystem_error &err) {
       system("clear");
       exceptionHandler.printPlainError(
           YELLOW +
