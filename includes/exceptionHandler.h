@@ -3,6 +3,7 @@
 #include <vector>
 
 using namespace std;
+using json = nlohmann::json;
 
 #ifndef EXCEPTION_HANDLER_H
 #define EXCEPTION_HANDLER_H
@@ -30,6 +31,15 @@ class ExceptionHandler {
     } else {
       return false;
     }
+  }
+
+  bool containsAll(const vector<string>& strings, const json& data) {
+    for (int i = 0; i < strings.size(); i++) {
+      if (!data.contains(strings[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   void printPlainError(const string& error) { cout << error << endl << endl; }

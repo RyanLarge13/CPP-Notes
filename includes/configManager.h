@@ -664,6 +664,11 @@ class ConfigManager {
     // Check if all pass contains()
     // make a helper function
     const json& body = res.resBodyJson;
+    const json& data = body["data"].get<json>();
+
+    if (!exceptionHandler.containsAll({"user", "folders", "notes"}, data)) {
+      return;
+    }
 
     const json& user = body["data"]["user"].get<json>();
     const json& folders = body["data"]["folders"].get<json>();
