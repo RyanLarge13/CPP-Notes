@@ -644,16 +644,25 @@ class ConfigManager {
 
     if (res.messageFromServer.size() > 0) {
       exceptionHandler.printPlainError(res.resBodyString);
+    }
+
+    if (res.didFail) {
+      exceptionHandler.printPlainError(
+          "We failed to synchronize your existing data from the server. Try to "
+          "log in again.");
+      loginServer();
       return;
     }
 
     if (res.bodyIsString) {
       exceptionHandler.printStringResBody(res.httpCode, res.resBodyString);
-      return;
     }
 
     // Lots of json for days here. Don't forget to use references with & and
     // .get<...>(); for extracting values correctly
+
+    // Check if all pass contains()
+    // make a helper function
     const json& body = res.resBodyJson;
 
     const json& user = body["data"]["user"].get<json>();
@@ -695,6 +704,34 @@ class ConfigManager {
       exceptionHandler.printPlainError(YELLOW + res.messageFromServer +
                                        ENDCOLOR);
       return;
+    }
+
+    if (res.didFail) {
+      string reLogin = ioHandler.getInput<string>(
+          {""}, "Would you like to attempt login one more time? (y,N): ",
+          "Please input a valid answer yes or no");
+      if (reLogin == "y" || reLogin == "Y") {
+        loginServer();
+        return;
+      }
+
+      // This config opening is also in main.cpp checkForAccount(). Lets build a
+      // method in config for it
+      ofstream* newConfig =
+          createConfigFile(fileManager.HOME_DIR + "/config.yaml");
+
+      if (!newConfig) {
+        delete newConfig;
+        exceptionHandler.printPlainError(
+            "Please make sure the app has sufficient permissions to create "
+            "files "
+            "in root. Reload the application and try again.");
+        return;
+      }
+
+      createAccount(newConfig);
+      newConfig->close();
+      delete newConfig;
     }
 
     if (res.bodyIsString) {

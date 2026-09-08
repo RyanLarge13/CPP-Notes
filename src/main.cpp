@@ -808,14 +808,14 @@ void printMenu() {
 
 void checkForAccount() {
   ifstream* config = configManager.checkForLocalConfigFile(
-      fileManager.HOME_DIR + "/" + "config.yaml");
+      fileManager.HOME_DIR + "/config.yaml");
 
   // User has never used the app or deleted old account
   if (!config) {
     delete config;
     // Create new configuration file
-    ofstream* newConfig = configManager.createConfigFile(fileManager.HOME_DIR +
-                                                         "/" + "config.yaml");
+    ofstream* newConfig =
+        configManager.createConfigFile(fileManager.HOME_DIR + "/config.yaml");
 
     // Failed to load a new config file in root. Kill app and prompt user
     if (!newConfig) {
