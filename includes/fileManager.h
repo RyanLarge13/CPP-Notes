@@ -113,6 +113,14 @@ public:
     return current_path().filename().string();
   }
 
+  bool isHome() {
+    if (getCurrentPath() == HOME_DIR) {
+      return true;
+    }
+
+    return false;
+  }
+
   bool navigateDir(const string &dirPath) {
     string absolutePath = HOME_DIR + dirPath;
     if (!checkDirExists(absolutePath)) {

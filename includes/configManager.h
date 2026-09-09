@@ -18,6 +18,8 @@ using json = nlohmann::json;
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
+void loopNestedFolders(const json &folders, const int &folderid) {}
+
 class ConfigManager {
 private:
   struct User {
@@ -694,62 +696,126 @@ public:
     writeToConfigFile();
   }
 
+  inline static vector<int> parentFolderIdsToIgnore = {};
+
+  bool folderChecksPass(const string &title, const int &id) {
+    if (find(parentFolderIdsToIgnore.begin(), parentFolderIdsToIgnore.end(),
+             id) != parentFolderIdsToIgnore.end()) {
+      return false;
+    }
+
+    // FIX: Do not leave this as is! Need to instead navigate into dir and
+    // continue on as though that folder was successfully created and navigated
+    // to
+    if (fileManager.checkDirExists(title)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool didCreateDirAndNavigate(const string &title) {
+    bool didCreateNewDir = fileManager.createNewDirCustom("/" + title);
+
+    if (!didCreateNewDir) {
+      return false;
+    }
+
+    bool didNav = fileManager.navigateDir(title);
+
+    if (!didNav) {
+      throw runtime_error(
+          "Could not navigate through your file system. Check for "
+          "malformed folder names or contact the developer");
+    }
+
+    return true;
+  }
+
+  void updateLoop(const json &folders, const int &id) {
+    parentFolderIdsToIgnore.push_back(id);
+    loopNestedFolders(folders, id);
+  }
+
+  void loopNestedFolders(const json &folders, const int &folderid) {
+
+    // WARNING: We need to find a better way to know that we have traversed to
+    // the top level again more securely
+    if (fileManager.isHome()) {
+      return;
+    }
+
+    for (const json &folder : folders) {
+      if (!Helpers::containsAll({"title", "folderid", "parentFolderId"},
+                                folder)) {
+        // TODO: Maybe skip this folder?? Add it to some error sync log
+        continue;
+      }
+
+      int id = folder.at("folderid").get<int>();
+      string title = folder.at("title").get<string>();
+      bool isTopLevelFolder = folder.at("parentFolderId").is_null();
+
+      if (isTopLevelFolder) {
+        continue;
+      }
+
+      if (!folderChecksPass(title, id)) {
+        continue;
+      }
+
+      int parentFolderId = folder.at("parentFolderId").get<int>();
+
+      if (parentFolderId != folderid) {
+        continue;
+      }
+
+      if (!didCreateDirAndNavigate(title)) {
+        continue;
+      }
+
+      updateLoop(folders, id);
+    }
+
+    fileManager.navBack();
+  }
+
   // WARNING: Be careful where the user is currently at in the filesystem
   // directory before calling this method
   void manageUserData(const json &folders, const json &notes) {
-    vector<int> parentFolderIdsToIgnore = {};
-
-    void loopParentFolders(const int &parentFolderId) {
-      int iterations = 0;
-
-      // NOTE: Depth first search recurssion pattern
-      for (const json &folder : folders) {
-        if (!Helpers::containsAll({"title", "folderid", "parentFolderId"},
-                                  folder)) {
-          // TODO: Maybe skip this folder?? Add it to some error sync log
-          continue;
-        }
-
-        const int &id = folder["folderid"].get<int>();
-        const string &title = folder["title"].get<string>();
-        bool isParentFolder = folder.at("parentFolderId").is_null();
-
-        // NOTE: Do not create the directory. It already has been looped
-        // over
-        if (find(parentFolderIdsToIgnore.begin(), parentFolderIdsToIgnore.end(),
-                 id) != parentFolderIdsToIgnore.end()) {
-          continue;
-        }
-
-        if (fileManager.checkDirExists(title)) {
-          continue;
-        }
-
-        // NOTE: Build folder in main dir
-        bool didCreateNewDir = fileManager.createNewDirCustom("/" + title);
-
-        if (!didCreateNewDir) {
-          // TODO: Keep going maybe?? Not sure
-          continue;
-        }
-
-        bool didNav = fileManager.navigateDir(currentIterationDirPath + title);
-
-        if (!didNav) {
-          throw runtime_error(
-              "Could not navigate through your file system. Check for "
-              "malformed folder names or contact the developer");
-        }
-
-        parentFolderIdsToIgnore.push_back(id);
-
-        recurseFolders();
+    // NOTE: Depth first search recursion pattern
+    for (const json &folder : folders) {
+      if (!Helpers::containsAll({"title", "folderid", "parentFolderId"},
+                                folder)) {
+        // TODO: Maybe skip this folder?? Add it to some error sync log
+        continue;
       }
 
-      // TODO: Build notes in main dir
+      int id = folder.at("folderid").get<int>();
+      string title = folder.at("title").get<string>();
+      bool isTopLevelFolder = folder.at("parentFolderId").is_null();
+
+      if (!isTopLevelFolder) {
+        continue;
+      }
+
+      // NOTE: Do not create the directory. It already has been looped
+      // over or created
+      if (!folderChecksPass(title, id)) {
+        continue;
+      }
+
+      // NOTE: Build folder in main dir
+      if (!didCreateDirAndNavigate(title)) {
+        continue;
+      }
+
+      updateLoop(folders, id);
     }
 
-    loopParentFolders(-1);
+    if (folders.size() > 0) {
+      fileManager.navBack();
+    }
   }
 
   void grabServerData(const string &token, HttpHandler &httpHandler) {
