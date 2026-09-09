@@ -9,10 +9,10 @@ using json = nlohmann::json;
 #define EXCEPTION_HANDLER_H
 
 class ExceptionHandler {
- private:
- public:
-  bool handleError(const vector<string>& messages, const string& question) {
-    for (const string& message : messages) {
+private:
+public:
+  bool handleError(const vector<string> &messages, const string &question) {
+    for (const string &message : messages) {
       cout << message << endl;
     }
 
@@ -33,18 +33,9 @@ class ExceptionHandler {
     }
   }
 
-  bool containsAll(const vector<string>& strings, const json& data) {
-    for (int i = 0; i < strings.size(); i++) {
-      if (!data.contains(strings[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
+  void printPlainError(const string &error) { cout << error << endl << endl; }
 
-  void printPlainError(const string& error) { cout << error << endl << endl; }
-
-  void printStringResBody(long httpCode, const string& body) {
+  void printStringResBody(long httpCode, const string &body) {
     string errStr = "\\n\\n" + YELLOW + "HTTP status code: \\n" + ENDCOLOR +
                     to_string(httpCode) + "\\n\\n" + YELLOW + "Res body: \\n" +
                     ENDCOLOR + body + "\\n";
@@ -52,8 +43,8 @@ class ExceptionHandler {
     printPlainError(errStr);
   }
 
-  void printInstructions(const vector<string>& instructions) {
-    for (const string& instruction : instructions) {
+  void printInstructions(const vector<string> &instructions) {
+    for (const string &instruction : instructions) {
       cout << instruction << endl << endl;
     }
   }
