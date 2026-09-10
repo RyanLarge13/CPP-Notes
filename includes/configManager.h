@@ -2,7 +2,9 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <unordered_map>
 #include <vector>
+
 
 #include "../common/exceptionHandlerInstance.h"
 #include "../common/fileManagerInstance.h"
@@ -18,10 +20,10 @@ using json = nlohmann::json;
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
-void loopNestedFolders(const json& folders, const int& folderid) {}
+void loopNestedFolders(const json &folders, const int &folderid) {}
 
 class ConfigManager {
- private:
+private:
   struct User {
     int userid;
     int pin;
@@ -34,23 +36,17 @@ class ConfigManager {
     string mainDir;
 
     User(int userid, int pin, bool loggedIn, bool hasSyncedServer,
-         const string& token, const string& username, const string& email,
-         const string& password, const string& mainDir)
-        : userid(userid),
-          pin(pin),
-          loggedIn(loggedIn),
-          hasSyncedServer(hasSyncedServer),
-          token(token),
-          username(username),
-          email(email),
-          password(password),
-          mainDir(mainDir) {}
+         const string &token, const string &username, const string &email,
+         const string &password, const string &mainDir)
+        : userid(userid), pin(pin), loggedIn(loggedIn),
+          hasSyncedServer(hasSyncedServer), token(token), username(username),
+          email(email), password(password), mainDir(mainDir) {}
   };
 
   inline static User globalUser =
       User(1, 1234, false, false, "", "", "", "", "/cpp-notes");
 
-  void confirmPass(const string& password) {
+  void confirmPass(const string &password) {
     string confirmPassword = ioHandler.getInput<string>(
         {{"Confirm your password"}},
         "Confirm Password: ", "Please input valid characters");
@@ -94,23 +90,22 @@ class ConfigManager {
           "when calling getUserInfo from inside changeLogin()");
     }
 
-    fstream* file =
+    fstream *file =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "config.yaml");
 
     if (!file) {
       // Do not catch this. Allow dev to fix
-      throw runtime_error(
-          "Dev: opening config.yaml file from inside "
-          "changeLogin is failing. Check for proper routing");
+      throw runtime_error("Dev: opening config.yaml file from inside "
+                          "changeLogin is failing. Check for proper routing");
     }
 
     rows[0] = "logged_in: " + state;
 
     try {
-      for (const string& row : rows) {
+      for (const string &row : rows) {
         *file << row << "\n";
       }
-    } catch (const filesystem_error& err) {
+    } catch (const filesystem_error &err) {
       exceptionHandler.printPlainError(
           "There was a problem writing to your configuration file. Please "
           "check to make sure you have the proper access rights to config.yaml "
@@ -163,11 +158,11 @@ class ConfigManager {
   string createUsername() {
     string username = ioHandler.getInput<string>(
         {{""}}, "Username: ", "Your username must be valid characters");
-    if (!validator.checkValidString(
-            3, 20,
-            {'<', '>', ',', '{', '}', '[', ']', '!', '@', '#', '$', '%', '^',
-             '&', '*', '(', ')', '+', '='},
-            username)) {
+    if (!validator.checkValidString(3, 20,
+                                    {'<', '>', ',', '{', '}', '[', ']', '!',
+                                     '@', '#', '$', '%', '^', '&', '*', '(',
+                                     ')', '+', '='},
+                                    username)) {
       exceptionHandler.printPlainError("Please insert a valid username");
       exceptionHandler.printInstructions(
           {{"- Can ONLY contain:", "  - letters", "  - numbers",
@@ -290,7 +285,7 @@ class ConfigManager {
   // NOTE: Call after updating global user to keep config file in sync. Global
   // search "globalUser = User("; and call this method after each.
   void writeToConfigFile() {
-    ofstream* configFile = openNewConfig();
+    ofstream *configFile = openNewConfig();
 
     if (!configFile) {
       return;
@@ -310,16 +305,15 @@ class ConfigManager {
     if (configFile->fail()) {
       // NOTE: Catch this method if program should continue even without
       // successfull write
-      throw runtime_error(
-          "Could not write to your configuration file. Storage "
-          "may be low or some other io operation failed");
+      throw runtime_error("Could not write to your configuration file. Storage "
+                          "may be low or some other io operation failed");
     }
 
     configFile->close();
     delete configFile;
   }
 
-  string getNewUsername(const string& currentUsername) {
+  string getNewUsername(const string &currentUsername) {
     const string newUsername = ioHandler.getInput<string>(
         {{"Type your current username again to cancel and return to the "
           "main "
@@ -353,7 +347,7 @@ class ConfigManager {
     return newUsername;
   }
 
-  string getNewPass(const string& currentPass) {
+  string getNewPass(const string &currentPass) {
     const string newPass = ioHandler.getInput<string>(
         {{""}}, "New password: ", "Please provide a valid response");
     if (newPass == currentPass) {
@@ -370,7 +364,7 @@ class ConfigManager {
     return newPass;
   }
 
-  int getNewPin(const int& currentPin) {
+  int getNewPin(const int &currentPin) {
     const int newPin =
         ioHandler.getInput<int>({{"Enter your original pin value to cancel and "
                                   "return to the main menu"}},
@@ -389,8 +383,8 @@ class ConfigManager {
     return newPin;
   }
 
-  bool updateConfig(const vector<string>& userInfo) {
-    fstream* config =
+  bool updateConfig(const vector<string> &userInfo) {
+    fstream *config =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
     if (!config) {
       delete config;
@@ -409,13 +403,13 @@ class ConfigManager {
     return true;
   }
 
- public:
+public:
   // NOTE: Remember to update config if it already exists after opening. This
   // method opens an existing config if it already has been created, truncates
   // and erases all text that is already present returning a pointer to an empty
   // blank config file
-  ofstream* openNewConfig() {
-    ofstream* newConfig =
+  ofstream *openNewConfig() {
+    ofstream *newConfig =
         createConfigFile(fileManager.HOME_DIR + "/config.yaml");
 
     // Failed to load a new config file in root. Kill app and prompt user
@@ -430,7 +424,7 @@ class ConfigManager {
     return newConfig;
   }
 
-  bool changeUsername(vector<string>& userInfo) {
+  bool changeUsername(vector<string> &userInfo) {
     cout << "Okay, let's change your username. To exit, simply type your "
             "current username when asked to give a new one"
          << endl;
@@ -459,7 +453,7 @@ class ConfigManager {
     return didUpdate;
   }
 
-  bool changePass(vector<string>& userInfo) {
+  bool changePass(vector<string> &userInfo) {
     const string currentPass = userInfo[3];
     cout << "Okay, let's change your password. To cancel and return to main "
             "menu type in your current password again when asked for a new "
@@ -487,7 +481,7 @@ class ConfigManager {
     return didUpdate;
   }
 
-  bool changePin(vector<string>& userInfo) {
+  bool changePin(vector<string> &userInfo) {
     const int currentPin = stoi(userInfo[4]);
     cout << "Okay, sounds good. let's change your pin for logging in and "
             "opening locked notes"
@@ -515,7 +509,7 @@ class ConfigManager {
     return configUpdated;
   }
 
-  bool changeDir(vector<string>& userInfo) {
+  bool changeDir(vector<string> &userInfo) {
     const string currentMainDir = userInfo[5];
     cout << "Okay, let's change the directory name that you store your "
             "folders "
@@ -567,7 +561,7 @@ class ConfigManager {
     return false;
   }
 
-  void createMainDir(const string& mainDirName) {
+  void createMainDir(const string &mainDirName) {
     bool newDirCreated = fileManager.createNewDir("/" + mainDirName);
 
     // NOTE: Program must hault and user manages problem. Cannot move on without
@@ -580,7 +574,7 @@ class ConfigManager {
   }
 
   vector<string> getUserInfo(bool rawData) {
-    fstream* file =
+    fstream *file =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
     if (!file) {
       delete file;
@@ -620,16 +614,16 @@ class ConfigManager {
     return rows;
   }
 
-  ifstream* checkForLocalConfigFile(const string& fileName) {
-    ifstream* fileExists = fileManager.checkExistingFile(fileName);
+  ifstream *checkForLocalConfigFile(const string &fileName) {
+    ifstream *fileExists = fileManager.checkExistingFile(fileName);
     if (!fileExists) {
       return nullptr;
     }
     return fileExists;
   }
 
-  ofstream* createConfigFile(const string& fileName) {
-    ofstream* newConfig = fileManager.createNewFile(fileName);
+  ofstream *createConfigFile(const string &fileName) {
+    ofstream *newConfig = fileManager.createNewFile(fileName);
     if (!newConfig) {
       delete newConfig;
       bool userInput = exceptionHandler.handleError(
@@ -666,7 +660,7 @@ class ConfigManager {
     return true;
   }
 
-  void manageUser(const string& token, const json& user) {
+  void manageUser(const string &token, const json &user) {
     // NOTE: Server user data looks like:
     // { user: userid: int, username: string, email: string, createdat: int
     // };
@@ -682,8 +676,8 @@ class ConfigManager {
     // NOTE: We know it is safe to grab userid, username, email as we already
     // checked for these values in grabServerData();
     int userid = user["userid"].get<int>();
-    const string& username = user["username"].get<string>();
-    const string& email = user["email"].get<string>();
+    const string &username = user["username"].get<string>();
+    const string &email = user["email"].get<string>();
     int newPin = createPin();
 
     string mainDirName = "cpp-notes";
@@ -706,7 +700,7 @@ class ConfigManager {
 
   inline static vector<int> parentFolderIdsToIgnore = {};
 
-  bool folderChecksPass(const string& title, const int& id) {
+  bool folderChecksPass(const string &title, const int &id) {
     if (find(parentFolderIdsToIgnore.begin(), parentFolderIdsToIgnore.end(),
              id) != parentFolderIdsToIgnore.end()) {
       return false;
@@ -722,7 +716,7 @@ class ConfigManager {
     return true;
   }
 
-  bool didCreateDirAndNavigate(const string& title) {
+  bool didCreateDirAndNavigate(const string &title) {
     bool didCreateNewDir = fileManager.createNewDirCustom("/" + title);
 
     if (!didCreateNewDir) {
@@ -740,19 +734,19 @@ class ConfigManager {
     return true;
   }
 
-  void updateLoop(const json& folders, const int& id) {
+  void updateLoop(const json &folders, const int &id) {
     parentFolderIdsToIgnore.push_back(id);
     loopNestedFolders(folders, id);
   }
 
-  void loopNestedFolders(const json& folders, const int& folderid) {
+  void loopNestedFolders(const json &folders, const int &folderid) {
     // WARNING: We need to find a better way to know that we have traversed to
     // the top level again more securely
     if (fileManager.isHome()) {
       return;
     }
 
-    for (const json& folder : folders) {
+    for (const json &folder : folders) {
       if (!helpers.containsAll({"title", "folderid", "parentFolderId"},
                                folder)) {
         // TODO: Maybe skip this folder?? Add it to some error sync log
@@ -789,9 +783,27 @@ class ConfigManager {
 
   // WARNING: Be careful where the user is currently at in the filesystem
   // directory before calling this method
-  void manageUserData(const json& folders, const json& notes) {
-    // NOTE: Depth first search recursion pattern
-    for (const json& folder : folders) {
+  void manageUserData(const json &folders, const json &notes) {
+    // NOTE: Depth first search recursion pattern looping through all folders
+    // that live in the top level of the custom filesystem
+
+    json topLevelFolders = json::array();
+    unordered_map<int, json> childrenByParent;
+
+    for (const json &folder : folders) {
+      bool isTopLevel = folder.at("parentFolderId").is_null();
+
+      // NOTE: This will build an array for initially looping through for the
+      // recursive pattern entry
+      if (isTopLevel) {
+        topLevelFolders.push_back(folder);
+        continue;
+      }
+
+      int id = folder.at("folderid").get<int>();
+    }
+
+    for (const json &folder : folders) {
       if (!helpers.containsAll({"title", "folderid", "parentFolderId"},
                                folder)) {
         // TODO: Maybe skip this folder?? Add it to some error sync log
@@ -825,7 +837,7 @@ class ConfigManager {
     }
   }
 
-  void grabServerData(const string& token, HttpHandler& httpHandler) {
+  void grabServerData(const string &token, HttpHandler &httpHandler) {
     HttpHandler::ResponseObject res = httpHandler.getUserData(token);
 
     if (res.messageFromServer.size() > 0) {
@@ -844,8 +856,8 @@ class ConfigManager {
       exceptionHandler.printStringResBody(res.httpCode, res.resBodyString);
     }
 
-    const json& body = res.resBodyJson;
-    const json& data = body["data"].get<json>();
+    const json &body = res.resBodyJson;
+    const json &data = body["data"].get<json>();
 
     if (!helpers.containsAll({"user", "folders", "notes"}, data)) {
       exceptionHandler.printPlainError(
@@ -856,9 +868,9 @@ class ConfigManager {
     }
 
     // TODO: Validate server response with .is_array && .is_object
-    const json& user = data.at("user");
-    const json& folders = data.at("folders");
-    const json& notes = data.at("notes");
+    const json &user = data.at("user");
+    const json &folders = data.at("folders");
+    const json &notes = data.at("notes");
 
     manageUser(token, user);
     manageUserData(folders, notes);
@@ -917,7 +929,7 @@ class ConfigManager {
       return;
     }
 
-    const string& token = res.resBodyJson["data"].get<string>();
+    const string &token = res.resBodyJson["data"].get<string>();
 
     grabServerData(token, httpHandler);
   }
@@ -1014,7 +1026,7 @@ class ConfigManager {
       }
 
       return true;
-    } catch (const filesystem_error& err) {
+    } catch (const filesystem_error &err) {
       system("clear");
       exceptionHandler.printPlainError(
           YELLOW +
