@@ -6,7 +6,7 @@
 
 #include "../common/exceptionHandlerInstance.h"
 #include "../common/fileManagerInstance.h"
-#include "../common/helpers.h"
+#include "../common/helpersInstance.h"
 #include "../common/httpHandlerInstance.h"
 #include "../common/ioHandlerInstance.h"
 #include "../common/validatorInstance.h"
@@ -18,33 +18,39 @@ using json = nlohmann::json;
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
-void loopNestedFolders(const json &folders, const int &folderid) {}
+void loopNestedFolders(const json& folders, const int& folderid) {}
 
 class ConfigManager {
-private:
+ private:
   struct User {
     int userid;
     int pin;
     bool loggedIn;
     bool hasSyncedServer;
-    const string &token;
-    const string &username;
-    const string &email;
-    const string &password;
-    const string &mainDir;
+    string token;
+    string username;
+    string email;
+    string password;
+    string mainDir;
 
     User(int userid, int pin, bool loggedIn, bool hasSyncedServer,
-         const string &token, const string &username, const string &email,
-         const string &password, const string &mainDir)
-        : userid(userid), pin(pin), loggedIn(loggedIn),
-          hasSyncedServer(hasSyncedServer), token(token), username(username),
-          email(email), mainDir(mainDir) {}
+         const string& token, const string& username, const string& email,
+         const string& password, const string& mainDir)
+        : userid(userid),
+          pin(pin),
+          loggedIn(loggedIn),
+          hasSyncedServer(hasSyncedServer),
+          token(token),
+          username(username),
+          email(email),
+          password(password),
+          mainDir(mainDir) {}
   };
 
-  inline static globalUser =
+  inline static User globalUser =
       User(1, 1234, false, false, "", "", "", "", "/cpp-notes");
 
-  void confirmPass(const string &password) {
+  void confirmPass(const string& password) {
     string confirmPassword = ioHandler.getInput<string>(
         {{"Confirm your password"}},
         "Confirm Password: ", "Please input valid characters");
@@ -88,22 +94,23 @@ private:
           "when calling getUserInfo from inside changeLogin()");
     }
 
-    fstream *file =
+    fstream* file =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "config.yaml");
 
     if (!file) {
       // Do not catch this. Allow dev to fix
-      throw runtime_error("Dev: opening config.yaml file from inside "
-                          "changeLogin is failing. Check for proper routing");
+      throw runtime_error(
+          "Dev: opening config.yaml file from inside "
+          "changeLogin is failing. Check for proper routing");
     }
 
     rows[0] = "logged_in: " + state;
 
     try {
-      for (const string &row : rows) {
+      for (const string& row : rows) {
         *file << row << "\n";
       }
-    } catch (const filesystem_error &err) {
+    } catch (const filesystem_error& err) {
       exceptionHandler.printPlainError(
           "There was a problem writing to your configuration file. Please "
           "check to make sure you have the proper access rights to config.yaml "
@@ -156,11 +163,11 @@ private:
   string createUsername() {
     string username = ioHandler.getInput<string>(
         {{""}}, "Username: ", "Your username must be valid characters");
-    if (!validator.checkValidString(3, 20,
-                                    {'<', '>', ',', '{', '}', '[', ']', '!',
-                                     '@', '#', '$', '%', '^', '&', '*', '(',
-                                     ')', '+', '='},
-                                    username)) {
+    if (!validator.checkValidString(
+            3, 20,
+            {'<', '>', ',', '{', '}', '[', ']', '!', '@', '#', '$', '%', '^',
+             '&', '*', '(', ')', '+', '='},
+            username)) {
       exceptionHandler.printPlainError("Please insert a valid username");
       exceptionHandler.printInstructions(
           {{"- Can ONLY contain:", "  - letters", "  - numbers",
@@ -174,7 +181,7 @@ private:
           " is the username you want"}},
         YELLOW + "(Y/n): " + ENDCOLOR,
         "Please give a valid answer, Y for yes n for no");
-    if (Helpers::inputStringIsYes(confirm)) {
+    if (helpers.inputStringIsYes(confirm)) {
       return username;
     } else {
       cout << endl
@@ -208,7 +215,7 @@ private:
         YELLOW + "(Y/n): " + ENDCOLOR,
         "Please give a valid answer, Y for yes, n for no");
 
-    if (Helpers::inputStringIsYes(confirm)) {
+    if (helpers.inputStringIsYes(confirm)) {
       return email;
     } else {
       cout << endl << BLUE + "Okay, try again" + ENDCOLOR << endl;
@@ -252,7 +259,7 @@ private:
           " is what you want your new pin to be"}},
         YELLOW + "(Y/n): " + ENDCOLOR,
         "Please provide a valid response, Y for yes, n for no");
-    if (Helpers::inputStringIsYes(confirm)) {
+    if (helpers.inputStringIsYes(confirm)) {
       return pin;
     } else {
       system("clear");
@@ -274,7 +281,7 @@ private:
       return "cpp-notes";
     }
 
-    return Helpers::mainDirStringCleanup(dirName);
+    return helpers.mainDirStringCleanup(dirName);
   }
 
   // USAGE: Update / create the most up to date User struct available to the
@@ -283,7 +290,7 @@ private:
   // NOTE: Call after updating global user to keep config file in sync. Global
   // search "globalUser = User("; and call this method after each.
   void writeToConfigFile() {
-    ofstream *configFile = openNewConfig();
+    ofstream* configFile = openNewConfig();
 
     if (!configFile) {
       return;
@@ -303,15 +310,16 @@ private:
     if (configFile->fail()) {
       // NOTE: Catch this method if program should continue even without
       // successfull write
-      throw runtime_error("Could not write to your configuration file. Storage "
-                          "may be low or some other io operation failed");
+      throw runtime_error(
+          "Could not write to your configuration file. Storage "
+          "may be low or some other io operation failed");
     }
 
     configFile->close();
     delete configFile;
   }
 
-  string getNewUsername(const string &currentUsername) {
+  string getNewUsername(const string& currentUsername) {
     const string newUsername = ioHandler.getInput<string>(
         {{"Type your current username again to cancel and return to the "
           "main "
@@ -345,7 +353,7 @@ private:
     return newUsername;
   }
 
-  string getNewPass(const string &currentPass) {
+  string getNewPass(const string& currentPass) {
     const string newPass = ioHandler.getInput<string>(
         {{""}}, "New password: ", "Please provide a valid response");
     if (newPass == currentPass) {
@@ -362,7 +370,7 @@ private:
     return newPass;
   }
 
-  int getNewPin(const int &currentPin) {
+  int getNewPin(const int& currentPin) {
     const int newPin =
         ioHandler.getInput<int>({{"Enter your original pin value to cancel and "
                                   "return to the main menu"}},
@@ -381,8 +389,8 @@ private:
     return newPin;
   }
 
-  bool updateConfig(const vector<string> &userInfo) {
-    fstream *config =
+  bool updateConfig(const vector<string>& userInfo) {
+    fstream* config =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
     if (!config) {
       delete config;
@@ -401,13 +409,13 @@ private:
     return true;
   }
 
-public:
+ public:
   // NOTE: Remember to update config if it already exists after opening. This
   // method opens an existing config if it already has been created, truncates
   // and erases all text that is already present returning a pointer to an empty
   // blank config file
-  ofstream *openNewConfig() {
-    ofstream *newConfig =
+  ofstream* openNewConfig() {
+    ofstream* newConfig =
         createConfigFile(fileManager.HOME_DIR + "/config.yaml");
 
     // Failed to load a new config file in root. Kill app and prompt user
@@ -422,7 +430,7 @@ public:
     return newConfig;
   }
 
-  bool changeUsername(vector<string> &userInfo) {
+  bool changeUsername(vector<string>& userInfo) {
     cout << "Okay, let's change your username. To exit, simply type your "
             "current username when asked to give a new one"
          << endl;
@@ -451,7 +459,7 @@ public:
     return didUpdate;
   }
 
-  bool changePass(vector<string> &userInfo) {
+  bool changePass(vector<string>& userInfo) {
     const string currentPass = userInfo[3];
     cout << "Okay, let's change your password. To cancel and return to main "
             "menu type in your current password again when asked for a new "
@@ -479,7 +487,7 @@ public:
     return didUpdate;
   }
 
-  bool changePin(vector<string> &userInfo) {
+  bool changePin(vector<string>& userInfo) {
     const int currentPin = stoi(userInfo[4]);
     cout << "Okay, sounds good. let's change your pin for logging in and "
             "opening locked notes"
@@ -507,7 +515,7 @@ public:
     return configUpdated;
   }
 
-  bool changeDir(vector<string> &userInfo) {
+  bool changeDir(vector<string>& userInfo) {
     const string currentMainDir = userInfo[5];
     cout << "Okay, let's change the directory name that you store your "
             "folders "
@@ -518,7 +526,7 @@ public:
                                    "Are you sure you would like to change the "
                                    "name of your main directory? (Y/n): ",
                                    "Pleas provide a valid response");
-    if (Helpers::inputStringIsYes(confirmation)) {
+    if (helpers.inputStringIsYes(confirmation)) {
       const string newDirName = ioHandler.getInput<string>(
           {{""}}, "New directory name: ", "Please provide a valid response");
       // Validate new directory name
@@ -528,7 +536,7 @@ public:
               ENDCOLOR,
           "Please provide a valid response");
 
-      if (Helpers::inputStringIsYes(confirmNewDirName)) {
+      if (helpers.inputStringIsYes(confirmNewDirName)) {
         cout << "Sounds good" << endl;
         const bool didUpdateDir =
             fileManager.renameDir(userInfo[5], newDirName);
@@ -559,8 +567,8 @@ public:
     return false;
   }
 
-  void createMainDir(const string &mainDirName) {
-    bool newDirCreated = fileManager.createNewDir("/" + mainDir);
+  void createMainDir(const string& mainDirName) {
+    bool newDirCreated = fileManager.createNewDir("/" + mainDirName);
 
     // NOTE: Program must hault and user manages problem. Cannot move on without
     // main dir
@@ -572,7 +580,7 @@ public:
   }
 
   vector<string> getUserInfo(bool rawData) {
-    fstream *file =
+    fstream* file =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
     if (!file) {
       delete file;
@@ -612,16 +620,16 @@ public:
     return rows;
   }
 
-  ifstream *checkForLocalConfigFile(const string &fileName) {
-    ifstream *fileExists = fileManager.checkExistingFile(fileName);
+  ifstream* checkForLocalConfigFile(const string& fileName) {
+    ifstream* fileExists = fileManager.checkExistingFile(fileName);
     if (!fileExists) {
       return nullptr;
     }
     return fileExists;
   }
 
-  ofstream *createConfigFile(const string &fileName) {
-    ofstream *newConfig = fileManager.createNewFile(fileName);
+  ofstream* createConfigFile(const string& fileName) {
+    ofstream* newConfig = fileManager.createNewFile(fileName);
     if (!newConfig) {
       delete newConfig;
       bool userInput = exceptionHandler.handleError(
@@ -658,12 +666,12 @@ public:
     return true;
   }
 
-  void manageUser(const string &token, const json &user) {
+  void manageUser(const string& token, const json& user) {
     // NOTE: Server user data looks like:
     // { user: userid: int, username: string, email: string, createdat: int
     // };
 
-    if (!exceptionHandler.containsAll({"userid", "username", "email"}, user)) {
+    if (!helpers.containsAll({"userid", "username", "email"}, user)) {
       exceptionHandler.printPlainError(
           "There was a problem grabbing your information from the server. Try "
           "logging in again");
@@ -674,8 +682,8 @@ public:
     // NOTE: We know it is safe to grab userid, username, email as we already
     // checked for these values in grabServerData();
     int userid = user["userid"].get<int>();
-    const string &username = user["username"].get<string>();
-    const string &email = user["email"].get<string>();
+    const string& username = user["username"].get<string>();
+    const string& email = user["email"].get<string>();
     int newPin = createPin();
 
     string mainDirName = "cpp-notes";
@@ -685,20 +693,20 @@ public:
         "stored in or go with the defualt \"cpp-notes\" directory? (y/N)",
         "Please provide a valid response. \"y\" for yes and \"n\" for no");
 
-    if (Helpers::inputStringIsYes(makeCustomDir)) {
+    if (helpers.inputStringIsYes(makeCustomDir)) {
       mainDirName = createCustomDirName();
     }
 
     createMainDir(mainDirName);
 
-    globalUser = User(userid, newPin, true, true, token, username, email,
+    globalUser = User(userid, newPin, true, true, token, username, email, "",
                       "/" + mainDirName);
     writeToConfigFile();
   }
 
   inline static vector<int> parentFolderIdsToIgnore = {};
 
-  bool folderChecksPass(const string &title, const int &id) {
+  bool folderChecksPass(const string& title, const int& id) {
     if (find(parentFolderIdsToIgnore.begin(), parentFolderIdsToIgnore.end(),
              id) != parentFolderIdsToIgnore.end()) {
       return false;
@@ -714,7 +722,7 @@ public:
     return true;
   }
 
-  bool didCreateDirAndNavigate(const string &title) {
+  bool didCreateDirAndNavigate(const string& title) {
     bool didCreateNewDir = fileManager.createNewDirCustom("/" + title);
 
     if (!didCreateNewDir) {
@@ -732,22 +740,21 @@ public:
     return true;
   }
 
-  void updateLoop(const json &folders, const int &id) {
+  void updateLoop(const json& folders, const int& id) {
     parentFolderIdsToIgnore.push_back(id);
     loopNestedFolders(folders, id);
   }
 
-  void loopNestedFolders(const json &folders, const int &folderid) {
-
+  void loopNestedFolders(const json& folders, const int& folderid) {
     // WARNING: We need to find a better way to know that we have traversed to
     // the top level again more securely
     if (fileManager.isHome()) {
       return;
     }
 
-    for (const json &folder : folders) {
-      if (!Helpers::containsAll({"title", "folderid", "parentFolderId"},
-                                folder)) {
+    for (const json& folder : folders) {
+      if (!helpers.containsAll({"title", "folderid", "parentFolderId"},
+                               folder)) {
         // TODO: Maybe skip this folder?? Add it to some error sync log
         continue;
       }
@@ -782,11 +789,11 @@ public:
 
   // WARNING: Be careful where the user is currently at in the filesystem
   // directory before calling this method
-  void manageUserData(const json &folders, const json &notes) {
+  void manageUserData(const json& folders, const json& notes) {
     // NOTE: Depth first search recursion pattern
-    for (const json &folder : folders) {
-      if (!Helpers::containsAll({"title", "folderid", "parentFolderId"},
-                                folder)) {
+    for (const json& folder : folders) {
+      if (!helpers.containsAll({"title", "folderid", "parentFolderId"},
+                               folder)) {
         // TODO: Maybe skip this folder?? Add it to some error sync log
         continue;
       }
@@ -818,7 +825,7 @@ public:
     }
   }
 
-  void grabServerData(const string &token, HttpHandler &httpHandler) {
+  void grabServerData(const string& token, HttpHandler& httpHandler) {
     HttpHandler::ResponseObject res = httpHandler.getUserData(token);
 
     if (res.messageFromServer.size() > 0) {
@@ -837,10 +844,10 @@ public:
       exceptionHandler.printStringResBody(res.httpCode, res.resBodyString);
     }
 
-    const json &body = res.resBodyJson;
-    const json &data = body["data"].get<json>();
+    const json& body = res.resBodyJson;
+    const json& data = body["data"].get<json>();
 
-    if (!Helpers::containsAll({"user", "folders", "notes"}, data)) {
+    if (!helpers.containsAll({"user", "folders", "notes"}, data)) {
       exceptionHandler.printPlainError(
           "There was a problem fetching your data from the server. Please try "
           "logging in again");
@@ -849,9 +856,9 @@ public:
     }
 
     // TODO: Validate server response with .is_array && .is_object
-    const json &user = data.at("user");
-    const json &folders = data.at("folders");
-    const json &notes = data.at("notes");
+    const json& user = data.at("user");
+    const json& folders = data.at("folders");
+    const json& notes = data.at("notes");
 
     manageUser(token, user);
     manageUserData(folders, notes);
@@ -897,24 +904,12 @@ public:
           "Would you like to attempt login one more time? (y,N): ",
           "Please input a valid answer \"y\" for yes and \"n\" for no");
 
-      if (Helpers::inputStringIsYes(reLogin)) {
+      if (helpers.inputStringIsYes(reLogin)) {
         loginServer();
         return;
       }
 
-      // NOTE: Login failed, so send the user back to the begining and prompt
-      // for new account creation
-      ofstream *newConfig = openNewConfig();
-
-      if (!newConfig) {
-        // NOTE: Config file creation failed. Kill program. Prompt for fix
-        // already handled in openNewConfig()
-        return;
-      }
-
-      createAccount(newConfig);
-      newConfig->close();
-      delete newConfig;
+      createAccount();
     }
 
     if (res.bodyIsString) {
@@ -922,7 +917,7 @@ public:
       return;
     }
 
-    const string &token = res.resBodyJson["data"].get<string>();
+    const string& token = res.resBodyJson["data"].get<string>();
 
     grabServerData(token, httpHandler);
   }
@@ -942,7 +937,7 @@ public:
         "Do you have an account with one of these sister applications? (y,N): ",
         "Please answer with \"y\" for yes or \"N\" for no");
 
-    if (Helpers::inputStringIsYes(hasSisterAccount)) {
+    if (helpers.inputStringIsYes(hasSisterAccount)) {
       // NOTE: Config is deleted here. Config file can be created later instead
       // of passing it along with continuous API calls after loginServer();
 
@@ -984,7 +979,7 @@ public:
         {{""}}, YELLOW + "Are you sure you want to logout? (Y/n): " + ENDCOLOR,
         "Please provide a valid answer, Y for yes, n for no");
 
-    if (Helpers::inputStringIsYes(confirmLogout)) {
+    if (helpers.inputStringIsYes(confirmLogout)) {
       changeLogin("false");
       return true;
     }
@@ -1019,7 +1014,7 @@ public:
       }
 
       return true;
-    } catch (const filesystem_error &err) {
+    } catch (const filesystem_error& err) {
       system("clear");
       exceptionHandler.printPlainError(
           YELLOW +

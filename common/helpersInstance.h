@@ -1,5 +1,5 @@
-#ifndef HELPERS_H
-#define HELPERS_H
+#ifndef HELPERS_INSTANCE_H
+#define HELPERS_INSTANCE_H
 
 #include "../includes/helpers.h"
 
