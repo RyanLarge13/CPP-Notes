@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 #include "../common/exceptionHandlerInstance.h"
 #include "../common/fileManagerInstance.h"
 #include "../common/helpersInstance.h"
@@ -699,8 +698,14 @@ public:
   }
 
   inline static vector<int> parentFolderIdsToIgnore = {};
+  inline static json topLevelFolders = json::array();
+
+  // NOTE: pair<json, json> holds array of folders and array of notes
+  inline static unordered_map<int, pair<json, json>> childrenByParent;
 
   bool folderChecksPass(const string &title, const int &id) {
+    // NOTE: Keeping this check for extra security even though it might not be
+    // necessary
     if (find(parentFolderIdsToIgnore.begin(), parentFolderIdsToIgnore.end(),
              id) != parentFolderIdsToIgnore.end()) {
       return false;
@@ -734,107 +739,193 @@ public:
     return true;
   }
 
-  void updateLoop(const json &folders, const int &id) {
-    parentFolderIdsToIgnore.push_back(id);
-    loopNestedFolders(folders, id);
-  }
+  void buildNestedFolders(const int id) {
+    if (!childrenByParent.contains(id)) {
+      parentFolderIdsToIgnore.push_back(id);
+      fileManager.navBack();
+      return;
+    }
 
-  void loopNestedFolders(const json &folders, const int &folderid) {
-    // WARNING: We need to find a better way to know that we have traversed to
-    // the top level again more securely
-    if (fileManager.isHome()) {
+    const json &folders = childrenByParent.at(id);
+
+    if (folders.empty()) {
+      parentFolderIdsToIgnore.push_back(id);
+      fileManager.navBack();
       return;
     }
 
     for (const json &folder : folders) {
-      if (!helpers.containsAll({"title", "folderid", "parentFolderId"},
-                               folder)) {
-        // TODO: Maybe skip this folder?? Add it to some error sync log
-        continue;
-      }
-
-      int id = folder.at("folderid").get<int>();
+      int childId = folder.at("folderid").get<int>();
       string title = folder.at("title").get<string>();
-      bool isTopLevelFolder = folder.at("parentFolderId").is_null();
 
-      if (isTopLevelFolder) {
+      bool folderCanBeCreated = folderChecksPass(title, childId);
+
+      if (folderCanBeCreated) {
+        bool mapIdExists = childrenByParent.contains(childId);
+
+        if (mapIdExists) {
+          const json &childFoldersOfFolder = childrenByParent.at(childId);
+
+          if (!childFoldersOfFolder.empty()) {
+            bool folderCreatedAndNavigatedTo = didCreateDirAndNavigate(title);
+
+            if (folderCreatedAndNavigatedTo) {
+              parentFolderIdsToIgnore.push_back(childId);
+              buildNestedFolders(childId);
+              continue;
+            }
+          }
+        }
+
+        parentFolderIdsToIgnore.push_back(childId);
+        fileManager.createNewDirCustom("/" + title);
         continue;
       }
-
-      if (!folderChecksPass(title, id)) {
-        continue;
-      }
-
-      int parentFolderId = folder.at("parentFolderId").get<int>();
-
-      if (parentFolderId != folderid) {
-        continue;
-      }
-
-      if (!didCreateDirAndNavigate(title)) {
-        continue;
-      }
-
-      updateLoop(folders, id);
     }
 
     fileManager.navBack();
   }
 
+  void loopTopLevelFolders() {
+    json topLevelNotes = childrenByParent[0].second;
+
+    for (const json &note : topLevelNotes) {
+      const string title = note.at("title").get<string>();
+
+      fstream *newNote = fileManager.openFileReadWrite(title);
+
+      if (newNote) {
+        // Write to it
+
+        if (newNote.fail()) {
+        }
+      }
+    }
+
+    for (const json &folder : topLevelFolders) {
+      int id = folder.at("folderid").get<int>();
+      string title = folder.at("title").get<string>();
+
+      bool folderCanBeCreated = folderChecksPass(title, id);
+
+      if (folderCanBeCreated) {
+        bool folderCreatedAndNavigatedTo = didCreateDirAndNavigate(title);
+
+        if (folderCreatedAndNavigatedTo) {
+          // NOTE: This id is added just incase some strange malformed server
+          // data comes crashing in with identical id's
+          // TODO: I can fix this by using a unordered_set<int>;
+          parentFolderIdsToIgnore.push_back(id);
+          buildNestedFolders(id);
+        }
+      }
+
+      // NOTE: If we land here we just simply move on to the next iteration,
+      // skipping over all nested directories under this failed top level folder
+      // creation.
+      // TODO: Must find a solution that is user friendly
+    }
+  }
+
+  json findNotes(const int &folderId, const json &mutableNotes) {
+    json notesToReturn = json::array();
+    int it = 0;
+
+    for (const json &note : mutableNotes) {
+      if (!helpers.containsAll({"folderId", "htmlText", "title", "noteid"},
+                               note)) {
+        // TODO: Do something about this here. Server data is coming in weird
+        mutableNotes.erase(it);
+        it++;
+        continue;
+      }
+      bool isTopLevel = note.at("folderId").is_null();
+      bool folderIdIsTopLevel = folderId == 0;
+
+      if (isTopLevel && folderIdIsTopLevel) {
+        notesToReturn.push_back(note);
+        mutableNotes.erase(it);
+      }
+
+      const int noteId = note.at("noteid").get<int>();
+
+      if (folderId == noteId) {
+        notesToReturn.push_back(note);
+        mutableNotes.erase(it);
+      }
+
+      it++;
+    }
+
+    return notesToReturn;
+  }
+
   // WARNING: Be careful where the user is currently at in the filesystem
   // directory before calling this method
   void manageUserData(const json &folders, const json &notes) {
-    // NOTE: Depth first search recursion pattern looping through all folders
-    // that live in the top level of the custom filesystem
+    // NOTE: Depth first search recursion pattern starting by looping through
+    // all folders that live in the top level of the custom filesystem
 
-    json topLevelFolders = json::array();
-    unordered_map<int, json> childrenByParent;
+    // NOTE: This mutable copy is to keep original notes array referencable, and
+    // allow the construct map call to repeatedly remove already created notes
+    // to stop looping the entire notes vector each childrenByParent.first call
+    json notesMutable = notes;
+
+    // NOTE: Must clear these initially incase manageUserData is called again
+    // later in the program. Because these values are inline static they will
+    // hold the data in them throughout the entirrty of the programs life time
+
+    parentFolderIdsToIgnore.clear();
+    topLevelFolders.clear();
+    childrenByParent.clear();
+
+    // NOTE: Inner method specifically built for manageUserData initialization
+    // NOTE: inline static childrenByParent do not need to be captured in lambda
+    // --- cool
+    auto constructMap = [&notesMutable](const int parentId, const int folderId,
+                                        const json &folder) {
+      if (!childrenByParent.contains(parentId)) {
+        childrenByParent[parentId] = pair<json::array(), json::array()>;
+      }
+
+      childrenByParent[parentId].first.push_back(folder);
+      const json notesToSave = findNotes(parentId, notesMutable);
+
+      if (!notesToSave.empty()) {
+        for (const json &note : notesToSave) {
+          childrenByParent[parentId].second.push_back(note);
+        }
+      }
+
+      if (!childrenByParent.contains(folderId)) {
+        childrenByParent[folderId] = pair<json::array(), json::array()>;
+      }
+    };
 
     for (const json &folder : folders) {
+      if (!helpers.containsAll({"parentFolderId", "folderid", "title"},
+                               folder)) {
+        // TODO: Do something about this here. Server data is coming in weird
+        continue;
+      }
+
       bool isTopLevel = folder.at("parentFolderId").is_null();
+      int folderId = folder.at("folderid").get<int>();
 
       // NOTE: This will build an array for initially looping through for the
       // recursive pattern entry
       if (isTopLevel) {
         topLevelFolders.push_back(folder);
+        constructMap(0, folderId, folder);
         continue;
       }
 
-      int id = folder.at("folderid").get<int>();
+      int parentId = folder.at("parentFolderId").get<int>();
+
+      constructMap(parentId, folderId, folder);
     }
 
-    for (const json &folder : folders) {
-      if (!helpers.containsAll({"title", "folderid", "parentFolderId"},
-                               folder)) {
-        // TODO: Maybe skip this folder?? Add it to some error sync log
-        continue;
-      }
-
-      int id = folder.at("folderid").get<int>();
-      string title = folder.at("title").get<string>();
-      bool isTopLevelFolder = folder.at("parentFolderId").is_null();
-
-      if (!isTopLevelFolder) {
-        continue;
-      }
-
-      // NOTE: Do not create the directory. It already has been looped
-      // over or created
-      if (!folderChecksPass(title, id)) {
-        continue;
-      }
-
-      // NOTE: Build folder in main dir
-      if (!didCreateDirAndNavigate(title)) {
-        continue;
-      }
-
-      updateLoop(folders, id);
-    }
-
-    if (folders.size() > 0) {
-      fileManager.navBack();
-    }
+    loopTopLevelFolders();
   }
 
   void grabServerData(const string &token, HttpHandler &httpHandler) {
