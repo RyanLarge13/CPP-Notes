@@ -1,4 +1,22 @@
-# TODO
+# TODO's
+
+## Todo Template
+
+## {Month} {Year} -------------
+
+## Bugs
+- [ ]
+
+## Features
+- [ ] 
+
+## Cleanup
+- [ ] 
+
+## Done
+- [ ] 
+
+<hr></hr>
 
 ## September 2027 -------------
 
@@ -25,5 +43,5 @@
 - [x] Finish off users note and folder creation after successful server data query `configManager.h`
 - [x] Establish note creation and initialization in recursive folder loop `configManager`
 - [x] Add section comments in configManager and organize methods `configManager.h`
-- [x] Research into why all files are header files and no cpp exists other than main, haha. WTF was I doing? (Keeping the same for now)
+- [x] Research into why all files are header files and no cpp exists other than main, haha. WTF was I doing? **Keeping the same for now**
 - [x] Change all calls to method `updateConfig(...)` in `configManager.h` to instead call `writeToConfigFile()`. `configManager.h`
