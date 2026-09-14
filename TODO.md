@@ -27,6 +27,6 @@
 - [x] Decide whether or not `void writeToConfigFile()` should return a boolean to make sure continuation of the program haults? Or maybe I could throw. (**Decided to throw**)
 
 ## Cleanup
-- [ ] Check multiple chars with std::remove_if instead of std::remove in helpers.h to make `inline static string mainDirStringCleanup(const string &mainDir)` more versitile `helpers.h`
+- [x] ***9/14*** Check multiple chars with std::remove_if instead of std::remove in helpers.h to make `inline static string mainDirStringCleanup(const string &mainDir)` more versitile `helpers.h`
 - [x] ***9/14*** Add section comments in configManager and organize methods `configManager.h`
 - [x] ***9/14*** Research into why all files are header files and no cpp exists other than main, haha. WTF was I doing? (**Keeping the same for now**)
