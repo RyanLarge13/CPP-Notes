@@ -52,7 +52,12 @@ public:
     string input = mainDir;
 
     // TODO: Call remove_if in the future to handle more than a single ch
-    input.erase(remove(input.begin(), input.end(), '/'), input.end());
+    input.erase(remove_if(input.begin(), input.end(),
+                          [](char c) {
+                            return c == '/' || c == '\\' || c == '\"' ||
+                                   c == '\'';
+                          }),
+                input.end());
 
     return input;
   }
