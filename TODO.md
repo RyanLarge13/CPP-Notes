@@ -8,6 +8,7 @@
 ## Features
 - [ ] Build a local serialization method to safely store passwords and other sensitive info `helpers.h`
 - [ ] Create a more meaningful and robust `checkForExistingAccount()` method. `configManager.h`
+- [ ] Change all calls to method `updateConfig(...)` in `configManager.h` to instead call `writeToConfigFile()`. `configManager.h`
 - [x] *9/14* Establish note creation and initialization in recursive folder loop `configManager`
 - [x] *9/12* Finish off users note and folder creation after successful server data query `configManager.h`
 

@@ -19,8 +19,6 @@ using json = nlohmann::json;
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
-void loopNestedFolders(const json &folders, const int &folderid) {}
-
 class ConfigManager {
 private:
   struct User {
@@ -42,8 +40,56 @@ private:
           email(email), password(password), mainDir(mainDir) {}
   };
 
+public:
+  // NOTE: Share this user instance with the app
   inline static User globalUser =
       User(1, 1234, false, false, "", "", "", "", "/cpp-notes");
+
+  vector<string> getUserInfo(bool rawData) {
+    fstream *file =
+        fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
+    if (!file) {
+      delete file;
+      return {};
+    }
+    string line;
+    string value;
+    vector<string> rows;
+    while (getline(*file, value)) {
+      if (rawData) {
+        rows.push_back(value);
+      }
+      if (!rawData) {
+        size_t colonPosition = value.find(":");
+        if (colonPosition != string::npos) {
+          string lineValue = value.substr(colonPosition + 1);
+          string formattedLineValue = helpers.eraseWhiteSpace(lineValue);
+          rows.push_back(formattedLineValue);
+        }
+      }
+    }
+    if (file->fail() && !file->eof()) {
+      exceptionHandler.printInstructions(
+          {{"Please reload the application and try again. We encountered "
+            "an "
+            "issue reading your configuration file."},
+           {"1. Try deleting your configuration and re-running the "
+            "program"},
+           {"2. Make sure you have permissions set correctly to your "
+            "file"}});
+      file->close();
+      delete file;
+      return {};
+    }
+    file->close();
+    delete file;
+    return rows;
+  }
+
+private:
+  // -----------------------------------------------------------------------------
+  // USER INPUT CONFIRMATIONS
+  // -----------------------------------------------------------------------------
 
   void confirmPass(const string &password) {
     string confirmPassword = ioHandler.getInput<string>(
@@ -62,15 +108,17 @@ private:
     }
   }
 
-  string eraseWhiteSpace(string value) {
-    value.erase(value.begin(), find_if(value.begin(), value.end(),
-                                       [](int ch) { return !isspace(ch); }));
-    value.erase(find_if(value.rbegin(), value.rend(),
-                        [](int ch) { return !isspace(ch); })
-                    .base(),
-                value.end());
-    return value;
-  }
+  void confirmUsername(const string &username) {}
+
+  void confirmPin(const int &pin) {}
+
+  void confirmEmail(const string &email) {}
+
+  void confirmNewDirname(const string &newDirname) {}
+
+  // -----------------------------------------------------------------------------
+  // USER LOGIN LOGOUT METHODS
+  // -----------------------------------------------------------------------------
 
   bool changeLogin(string state) {
     if (state != "true" || state != "false") {
@@ -153,6 +201,23 @@ private:
     exceptionHandler.printPlainError("Incorrect pin. Please try again");
     return login();
   }
+
+  bool logout() {
+    string confirmLogout = ioHandler.getInput<string>(
+        {{""}}, YELLOW + "Are you sure you want to logout? (Y/n): " + ENDCOLOR,
+        "Please provide a valid answer, Y for yes, n for no");
+
+    if (helpers.inputStringIsYes(confirmLogout)) {
+      changeLogin("false");
+      return true;
+    }
+
+    return false;
+  }
+
+  // -----------------------------------------------------------------------------
+  // ACCOUNT USER INFORMATION CREATION
+  // -----------------------------------------------------------------------------
 
   string createUsername() {
     string username = ioHandler.getInput<string>(
@@ -278,11 +343,15 @@ private:
     return helpers.mainDirStringCleanup(dirName);
   }
 
+  // -----------------------------------------------------------------------------
+  // CONFIG FILE OPERATIONS
+  // -----------------------------------------------------------------------------
+
   // USAGE: Update / create the most up to date User struct available to the
   // main configuration file.
 
-  // NOTE: Call after updating global user to keep config file in sync. Global
-  // search "globalUser = User("; and call this method after each.
+  // WARNING: Call after updating global user to keep config file in sync.
+  // Global search "globalUser = User("; and call this method after each.
   void writeToConfigFile() {
     ofstream *configFile = openNewConfig();
 
@@ -311,6 +380,62 @@ private:
     configFile->close();
     delete configFile;
   }
+
+  // NOTE: Remember to update config if it already exists after opening. This
+  // method opens an existing config if it already has been created, truncates
+  // and erases all text that is already present returning a pointer to an empty
+  // blank config file
+  ofstream *openNewConfig() {
+    ofstream *newConfig =
+        createConfigFile(fileManager.HOME_DIR + "/config.yaml");
+
+    // Failed to load a new config file in root. Kill app and prompt user
+    if (!newConfig) {
+      delete newConfig;
+      exceptionHandler.printPlainError(
+          "Please make sure the app has sufficient permissions to create files "
+          "in root. Reload the application and try again.");
+      return nullptr;
+    }
+
+    return newConfig;
+  }
+
+  ifstream *checkForLocalConfigFile(const string &fileName) {
+    ifstream *fileExists = fileManager.checkExistingFile(fileName);
+    if (!fileExists) {
+      return nullptr;
+    }
+    return fileExists;
+  }
+
+  ofstream *createConfigFile(const string &fileName) {
+    ofstream *newConfig = fileManager.createNewFile(fileName);
+    if (!newConfig) {
+      delete newConfig;
+      bool userInput = exceptionHandler.handleError(
+          {{"We are having issues initializing a configuration file"}},
+          "Would you like to create this configuration file manually? "
+          "(Y/n)");
+      if (!userInput) {
+        return nullptr;
+      }
+      exceptionHandler.printInstructions(
+          {{"Steps to take: "},
+           {"1. End this program and within your current directory type in "
+            "\"touch config.yaml\""},
+           {"2. Run a command to make sure that you have read write and "
+            "execution access within the directory \"chmod 777 "
+            "config.yaml\""},
+           {"3. You are all set, re-run the application and try again."}});
+      return nullptr;
+    }
+    return newConfig;
+  }
+
+  // -----------------------------------------------------------------------------
+  // UPDATING ACCOUNT
+  // -----------------------------------------------------------------------------
 
   string getNewUsername(const string &currentUsername) {
     const string newUsername = ioHandler.getInput<string>(
@@ -382,47 +507,7 @@ private:
     return newPin;
   }
 
-  bool updateConfig(const vector<string> &userInfo) {
-    fstream *config =
-        fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
-    if (!config) {
-      delete config;
-      return false;
-    }
-    *config << "userid: " << "" << "\n";
-    *config << "token: " << "" << "\n";
-    *config << "logged_in: " << "true" << "\n";
-    *config << "username: " << userInfo[1] << "\n";
-    *config << "email: " << userInfo[2] << "\n";
-    *config << "password: " << userInfo[3] << "\n";
-    *config << "pin: " << userInfo[4] << "\n";
-    *config << "maindir: " << "/" + userInfo[5] << "\n";
-    config->close();
-    delete config;
-    return true;
-  }
-
 public:
-  // NOTE: Remember to update config if it already exists after opening. This
-  // method opens an existing config if it already has been created, truncates
-  // and erases all text that is already present returning a pointer to an empty
-  // blank config file
-  ofstream *openNewConfig() {
-    ofstream *newConfig =
-        createConfigFile(fileManager.HOME_DIR + "/config.yaml");
-
-    // Failed to load a new config file in root. Kill app and prompt user
-    if (!newConfig) {
-      delete newConfig;
-      exceptionHandler.printPlainError(
-          "Please make sure the app has sufficient permissions to create files "
-          "in root. Reload the application and try again.");
-      return nullptr;
-    }
-
-    return newConfig;
-  }
-
   bool changeUsername(vector<string> &userInfo) {
     cout << "Okay, let's change your username. To exit, simply type your "
             "current username when asked to give a new one"
@@ -572,79 +657,6 @@ public:
     }
   }
 
-  vector<string> getUserInfo(bool rawData) {
-    fstream *file =
-        fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
-    if (!file) {
-      delete file;
-      return {};
-    }
-    string line;
-    string value;
-    vector<string> rows;
-    while (getline(*file, value)) {
-      if (rawData) {
-        rows.push_back(value);
-      }
-      if (!rawData) {
-        size_t colonPosition = value.find(":");
-        if (colonPosition != string::npos) {
-          string lineValue = value.substr(colonPosition + 1);
-          string formattedLineValue = eraseWhiteSpace(lineValue);
-          rows.push_back(formattedLineValue);
-        }
-      }
-    }
-    if (file->fail() && !file->eof()) {
-      exceptionHandler.printInstructions(
-          {{"Please reload the application and try again. We encountered "
-            "an "
-            "issue reading your configuration file."},
-           {"1. Try deleting your configuration and re-running the "
-            "program"},
-           {"2. Make sure you have permissions set correctly to your "
-            "file"}});
-      file->close();
-      delete file;
-      return {};
-    }
-    file->close();
-    delete file;
-    return rows;
-  }
-
-  ifstream *checkForLocalConfigFile(const string &fileName) {
-    ifstream *fileExists = fileManager.checkExistingFile(fileName);
-    if (!fileExists) {
-      return nullptr;
-    }
-    return fileExists;
-  }
-
-  ofstream *createConfigFile(const string &fileName) {
-    ofstream *newConfig = fileManager.createNewFile(fileName);
-    if (!newConfig) {
-      delete newConfig;
-      bool userInput = exceptionHandler.handleError(
-          {{"We are having issues initializing a configuration file"}},
-          "Would you like to create this configuration file manually? "
-          "(Y/n)");
-      if (!userInput) {
-        return nullptr;
-      }
-      exceptionHandler.printInstructions(
-          {{"Steps to take: "},
-           {"1. End this program and within your current directory type in "
-            "\"touch config.yaml\""},
-           {"2. Run a command to make sure that you have read write and "
-            "execution access within the directory \"chmod 777 "
-            "config.yaml\""},
-           {"3. You are all set, re-run the application and try again."}});
-      return nullptr;
-    }
-    return newConfig;
-  }
-
   // TODO: Make a better check for existing account method. Delete old config if
   // not finished. Make sure all rows exist by name and value. Make sure config
   // is not tampered with or messed up
@@ -696,6 +708,10 @@ public:
                       "/" + mainDirName);
     writeToConfigFile();
   }
+
+  // -----------------------------------------------------------------------------
+  // RECURSIVE FOLDER AND NOTE CREATION
+  // -----------------------------------------------------------------------------
 
   inline static vector<int> parentFolderIdsToIgnore = {};
   inline static vector<int> noteIdsToIgnore = {};
@@ -883,8 +899,13 @@ public:
     return notesToReturn;
   }
 
+  // -----------------------------------------------------------------------------
+  // SERVER AND LOCAL SYNRONIZATION
+  // -----------------------------------------------------------------------------
+
   // WARNING: Be careful where the user is currently at in the filesystem
-  // directory before calling this method
+  // directory before calling this method. Maybe start by adding a route home
+  // first just to make sure
   void manageUserData(const json &folders, const json &notes) {
     // NOTE: Depth first search recursion pattern starting by looping through
     // all folders that live in the top level of the custom filesystem
@@ -1048,6 +1069,10 @@ public:
     grabServerData(token, httpHandler);
   }
 
+  // -----------------------------------------------------------------------------
+  // ACCOUNT HANDLING
+  // -----------------------------------------------------------------------------
+
   void createAccount() {
     cout << "Let's create an account" << endl
          << endl
@@ -1098,19 +1123,6 @@ public:
             "taking!!!"
          << endl
          << endl;
-  }
-
-  bool logout() {
-    string confirmLogout = ioHandler.getInput<string>(
-        {{""}}, YELLOW + "Are you sure you want to logout? (Y/n): " + ENDCOLOR,
-        "Please provide a valid answer, Y for yes, n for no");
-
-    if (helpers.inputStringIsYes(confirmLogout)) {
-      changeLogin("false");
-      return true;
-    }
-
-    return false;
   }
 
   bool deleteAccount() {

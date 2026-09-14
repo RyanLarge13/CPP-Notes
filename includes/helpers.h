@@ -11,13 +11,13 @@ using json = nlohmann::json;
 #define HELPERS_H
 
 class Helpers {
- public:
+public:
   // USAGE: Use to make ensure a good response incase the user typos when
   // attempting to type yes into the terminal
 
   // NOTE: Checks are based on commonly known
   // typos when a person is attempting to type yes
-  static bool inputStringIsYes(const string& input) {
+  static bool inputStringIsYes(const string &input) {
     string normalized = input;
 
     transform(normalized.begin(), normalized.end(), normalized.begin(),
@@ -29,7 +29,7 @@ class Helpers {
 
   // USAGE: When a json object needs multiple key checks especially when data
   // comes from the server
-  static bool containsAll(const vector<string>& strings, const json& data) {
+  static bool containsAll(const vector<string> &strings, const json &data) {
     for (int i = 0; i < strings.size(); i++) {
       if (!data.contains(strings[i])) {
         return false;
@@ -42,7 +42,7 @@ class Helpers {
   // and other strange characters need to be removed
 
   // WARNING: Do not use on other strings unless building custom main dir
-  static string mainDirStringCleanup(const string& mainDir) {
+  static string mainDirStringCleanup(const string &mainDir) {
     // NOTE: Possibly move out of function and let caller handle this part to
     // make this method more versitile with creating dirs
     if (mainDir.size() < 1) {
@@ -55,6 +55,17 @@ class Helpers {
     input.erase(remove(input.begin(), input.end(), '/'), input.end());
 
     return input;
+  }
+
+  // NOTE: Create a safe dir/file/config value
+  static string eraseWhiteSpace(string value) {
+    value.erase(value.begin(), find_if(value.begin(), value.end(),
+                                       [](int ch) { return !isspace(ch); }));
+    value.erase(find_if(value.rbegin(), value.rend(),
+                        [](int ch) { return !isspace(ch); })
+                    .base(),
+                value.end());
+    return value;
   }
 };
 
