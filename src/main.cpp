@@ -344,33 +344,37 @@ void openDir() {
 void updateProfile() {
   vector<string> updateOptions = {"1. Change username", "2. Change password",
                                   "3. Change pin", "4. Set main directory"};
+
   for (const string &option : updateOptions) {
     cout << option << endl;
   }
+
   cout << endl;
   int optionPicked = ioHandler.getInput<int>(
       {{""}}, "Select your option: ", "Please provide a valid option to 1 - 4");
+
   if (optionPicked < 1 || optionPicked > 4) {
     system("clear");
     cout << "Please provide a valid option 1 - 4" << endl;
     updateProfile();
   }
+
   switch (optionPicked) {
   case SettingsOptions::CHANGE_USERNAME:
     system("clear");
-    configManager.changeUsername(userInfo);
+    configManager.changeUsername();
     printMenu();
     break;
   case SettingsOptions::CHANGE_PASSWORD:
-    configManager.changePass(userInfo);
+    configManager.changePass();
     printMenu();
     break;
   case SettingsOptions::CHANGE_PIN:
-    configManager.changePin(userInfo);
+    configManager.changePin();
     printMenu();
     break;
   case SettingsOptions::CHANGE_DIR:
-    configManager.changeDir(userInfo);
+    configManager.changeDir();
     printMenu();
     break;
   }

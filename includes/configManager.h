@@ -508,128 +508,143 @@ private:
   }
 
 public:
-  bool changeUsername(vector<string> &userInfo) {
+  bool changeUsername() {
     cout << "Okay, let's change your username. To exit, simply type your "
-            "current username when asked to give a new one"
+            "current username when you are asked to give a new one"
          << endl;
-    // If online account connected. Also change remote username.
-    const string currentUsername = userInfo[1];
+
+    // NOTE: Don't forget to update server too someday
+    const string currentUsername = globalUser.username;
+
     const string confirmName = ioHandler.getInput<string>(
         {{""}}, "Confirm current username: ", "Please input a valid username");
+
     if (currentUsername != confirmName) {
       exceptionHandler.printPlainError("Try again");
       return changeUsername(userInfo);
     }
+
     string newName = getNewUsername(currentUsername);
+
     if (newName == "####") {
-      // User typed same name again to exit and return to menu
+      // NOTE: When #### is returned from getNewUsername it means the user typed
+      // the same username and exited early
       return false;
     }
+
     system("clear");
-    userInfo[1] = newName;
-    bool didUpdate = updateConfig(userInfo);
-    if (!didUpdate) {
-      userInfo[1] = currentUsername;
-      exceptionHandler.printPlainError(
-          "We could not update your local configuration.. We are terribly "
-          "sorry. Try changing your username again.");
-    }
-    return didUpdate;
+
+    globalUser.username = newName;
+
+    writeToConfigFile();
+
+    return true;
   }
 
-  bool changePass(vector<string> &userInfo) {
-    const string currentPass = userInfo[3];
+  bool changePass() {
+    const string currentPass = globalUser.password;
     cout << "Okay, let's change your password. To cancel and return to main "
             "menu type in your current password again when asked for a new "
             "one"
          << endl;
+
     const string confirmPass = ioHandler.getInput<string>(
         {{""}}, "Current Password: ", "Please provide a valid response");
+
     if (confirmPass != currentPass) {
       exceptionHandler.printPlainError(
           "You did not type in the correct password. Please try again");
       return changePass(userInfo);
     }
+
     string newPass = getNewPass(currentPass);
+
     if (newPass == "####") {
+      // NOTE: When #### is returned from getNewPass it means the user typed
+      // the same username and exited early
       return false;
     }
-    userInfo[3] = newPass;
-    bool didUpdate = updateConfig(userInfo);
-    if (!didUpdate) {
-      userInfo[3] = currentPass;
-      exceptionHandler.printPlainError(
-          "We could not update your local configuration.. We are terribly "
-          "sorry. Try changing your password again.");
-    }
-    return didUpdate;
+
+    system("clear");
+
+    globalUser.password = newPass;
+
+    writeToConfigFile();
+
+    return true;
   }
 
-  bool changePin(vector<string> &userInfo) {
-    const int currentPin = stoi(userInfo[4]);
+  bool changePin() {
+    const int currentPin = globalUser.pin;
+
     cout << "Okay, sounds good. let's change your pin for logging in and "
-            "opening locked notes"
+            "opening locked notes. To exit type -999 when you are asked to "
+            "create a new one"
          << endl;
+
     const int confirmPin = ioHandler.getInput<int>(
         {{""}}, "Confirm your current pin: ", "Please provide a valid pin");
-    // Validate pin
+
     if (currentPin != confirmPin) {
       exceptionHandler.printPlainError(
           "Please confirm the current pin you use to login");
       return changePin(userInfo);
     }
+
     int newPin = getNewPin(currentPin);
+
     if (newPin == -999) {
+      // NOTE: When #### is returned from getNewPin it means the user typed
+      // the same username and exited early
       return false;
     }
-    userInfo[4] = newPin;
-    bool configUpdated = updateConfig(userInfo);
-    if (!configUpdated) {
-      userInfo[4] = currentPin;
-      exceptionHandler.printPlainError(
-          "We could not update your local configuration.. We are terribly "
-          "sorry. Try changing your pin again.");
-    }
-    return configUpdated;
+
+    globalUser.pin = newPin;
+
+    writeToConfigFile();
+
+    return true;
   }
 
-  bool changeDir(vector<string> &userInfo) {
-    const string currentMainDir = userInfo[5];
+  bool changeDir() {
+    const string currentMainDir = globalUser.mainDir;
+
     cout << "Okay, let's change the directory name that you store your "
             "folders "
             "in"
          << endl;
+
     const string confirmation =
         ioHandler.getInput<string>({{""}},
                                    "Are you sure you would like to change the "
                                    "name of your main directory? (Y/n): ",
                                    "Pleas provide a valid response");
+
     if (helpers.inputStringIsYes(confirmation)) {
       const string newDirName = ioHandler.getInput<string>(
           {{""}}, "New directory name: ", "Please provide a valid response");
-      // Validate new directory name
+
       const string confirmNewDirName = ioHandler.getInput<string>(
           {{""}},
-          "Confirm this is your new directory name: " + YELLOW + newDirName +
-              ENDCOLOR,
+          "Confirm this is your new directory name. " + YELLOW + newDirName +
+              ENDCOLOR + " (y/N): ",
           "Please provide a valid response");
 
       if (helpers.inputStringIsYes(confirmNewDirName)) {
         cout << "Sounds good" << endl;
+
+        // NOTE: Navigate home first!!!!!??????????????
         const bool didUpdateDir =
-            fileManager.renameDir(userInfo[5], newDirName);
+            fileManager.renameDir(globalUser.mainDir, newDirName);
+
         if (didUpdateDir) {
-          userInfo[5] = newDirName;
-          const bool didUpdateConfig = updateConfig(userInfo);
-          if (!didUpdateConfig) {
-            exceptionHandler.printPlainError(
-                "We could not update your local configuration.. We are "
-                "terribly "
-                "sorry. Try changing your main directory again.");
-            return false;
-          }
+          globalUser.mainDir = newDirName;
+
+          writeToConfigFile();
+
           return true;
         }
+
         exceptionHandler.printPlainError(
             "We failed to update the directory name where we store your "
             "notes. "
@@ -642,6 +657,7 @@ public:
 
       return changeDir(userInfo);
     }
+
     return false;
   }
 
