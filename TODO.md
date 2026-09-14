@@ -15,8 +15,8 @@
 
 ## Cleanup
 - [ ] Check multiple chars with std::remove_if instead of std::remove in helpers.h to make `inline static string mainDirStringCleanup(const string &mainDir)` more versitile `helpers.h`
-- [ ] Add section comments in configManager and organize methods `configManager.h`
-- [ ] Research into why all files are header files and no cpp exists other than main, haha. WTF was I doing?
+- [x] *9/14* Add section comments in configManager and organize methods `configManager.h`
+- [x] *9/14* Research into why all files are header files and no cpp exists other than main, haha. WTF was I doing?
 
 ## Done
 - [x] Create a global user variable and update configuration based on what global user is at that time
@@ -24,3 +24,5 @@
 - [x] Check configManager for globalUser and writeToConfig calls to make sure they are up to date with our new globalUser implementation `configManager.h`
 - [x] Finish off users note and folder creation after successful server data query `configManager.h`
 - [x] Establish note creation and initialization in recursive folder loop `configManager`
+- [x] Add section comments in configManager and organize methods `configManager.h`
+- [x] Research into why all files are header files and no cpp exists other than main, haha. WTF was I doing? (Keeping the same for now)
