@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cctype>
 #include <iostream>
+#include <sodium.h>
 
 #include "../common/helpersInstance.h"
 
@@ -76,6 +77,12 @@ public:
   // -----------------------------------------------------------------------------
   // STRING ENCRYPTION AND DECRYPTION METHODS
   // ----------------------------------------------------------------------------
+  bool didSodiumStart() {
+    if (sodium_init() < 0) {
+      return false;
+    }
+    return true;
+  }
 };
 
 #endif

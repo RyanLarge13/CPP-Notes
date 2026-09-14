@@ -8,7 +8,7 @@
   Create, organize, navigate, and eventually synchronize notes without leaving the terminal.
 </p>---
 
-«[!IMPORTANT]
+[!IMPORTANT]
 CPP Notes is currently under active development.
 
 This project began primarily as a way to learn and experiment with C++. As a result, parts of the codebase are still being reorganized, refactored, documented, and standardized.
@@ -199,6 +199,7 @@ You will currently need:
 - A C++ compiler such as "clang++"
 - "libcurl"
 - "ncurses"
+- "libsodium-dev"
 - "pkg-config"
 - A Linux or Unix-like development environment
 
@@ -219,7 +220,7 @@ mkdir -p bin
 
 clang++ src/main.cpp -o bin/myProg \
     $(pkg-config --cflags --libs libcurl) \
-    -lncurses
+    -lncurses \ -lsodium
 
 Depending on your system and library locations, additional include or library paths may be required.
 
