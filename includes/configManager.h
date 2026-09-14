@@ -698,6 +698,7 @@ public:
   }
 
   inline static vector<int> parentFolderIdsToIgnore = {};
+  inline static vector<int> noteIdsToIgnore = {};
   inline static json topLevelFolders = json::array();
 
   // NOTE: pair<json, json> holds array of folders and array of notes
@@ -739,19 +740,50 @@ public:
     return true;
   }
 
+  void buildNewNote(const json &note) {
+    const int id = note.at("id").get<int>();
+    const string title = note.at("title").get<string>();
+    const string html = note.at("htmlText").get<string>();
+
+    if (find(noteIdsToIgnore.begin(), noteIdsToIgnore.end(), id) !=
+        noteIdsToIgnore.end()) {
+      return;
+    }
+
+    fstream *newNote = fileManager.openFileReadWrite(title);
+
+    if (newNote) {
+      *newNote << html;
+      newNote->close();
+
+      if (newNote->fail()) {
+        // Handle this??
+      }
+
+      noteIdsToIgnore.push_back(id);
+      delete newNote;
+    }
+  }
+
   void buildNestedFolders(const int id) {
+    // NOTE: Do not worry about nested folders or notes here
     if (!childrenByParent.contains(id)) {
       parentFolderIdsToIgnore.push_back(id);
       fileManager.navBack();
       return;
     }
 
-    const json &folders = childrenByParent.at(id);
+    const json &folders = childrenByParent.at(id).first;
+    const json &notes = childrenByParent.at(id).second;
 
-    if (folders.empty()) {
+    if (folders.empty() && notes.empty()) {
       parentFolderIdsToIgnore.push_back(id);
       fileManager.navBack();
       return;
+    }
+
+    for (const json &note : notes) {
+      buildNewNote(note);
     }
 
     for (const json &folder : folders) {
@@ -790,16 +822,7 @@ public:
     json topLevelNotes = childrenByParent[0].second;
 
     for (const json &note : topLevelNotes) {
-      const string title = note.at("title").get<string>();
-
-      fstream *newNote = fileManager.openFileReadWrite(title);
-
-      if (newNote) {
-        // Write to it
-
-        if (newNote.fail()) {
-        }
-      }
+      buildNewNote(note);
     }
 
     for (const json &folder : topLevelFolders) {
