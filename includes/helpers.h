@@ -83,6 +83,31 @@ public:
     }
     return true;
   }
+
+  static string genEncryptionKeyAsBase64() {
+    unsigned char key[crypto_secretbox_KEYBYTES];
+
+    crypto_secretbox_keygen(key);
+
+    // NOTE: Explain how large the string will need to be based on how we
+    // generate the key
+    char base64EncodedKey[sodium_base64_ENCODED_LEN(
+        crypto_secretbox_KEYBYTES, sodium_base64_VARIANT_ORIGINAL)];
+
+    // NOTE: Encode base64EncodedKey! We pass in the char array we want the
+    // characters to be pushed into, the key we generated. The size of each. and
+    // the way we want sodium to process them
+    sodium_bin2base64(base64EncodedKey, sizeof base64EncodedKey, key,
+                      sizeof key, sodium_base64_VARIANT_ORIGINAL);
+
+    string keyStringBase64 = base64EncodedKey;
+
+    return keyStringBase64;
+  }
+
+  static unsigned char getExcriptionAsBytes(const string &base64EncodedString) {
+    sodium_base642bin();
+  }
 };
 
 #endif
