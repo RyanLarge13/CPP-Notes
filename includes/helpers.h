@@ -77,6 +77,42 @@ public:
   // -----------------------------------------------------------------------------
   // STRING ENCRYPTION AND DECRYPTION METHODS
   // ----------------------------------------------------------------------------
+
+  // NOTE: Encrypt Decrypt table overview
+  /**
+  ENCRYPT
+
+    vector<unsigned char>
+            ↓
+        encryptData()
+            ↓
+    EncryptedData
+    ├── bytes
+    └── nonce
+
+
+  DECRYPT
+
+    EncryptedData
+    ├── bytes
+    └── nonce
+            ↓
+        decryptData()
+            ↓
+    vector<unsigned char>
+  */
+
+  using EncryptionKey = std::array<unsigned char, crypto_secretbox_KEYBYTES>;
+  using Nonce = std::array<unsigned char, crypto_secretbox_NONCEBYTES>;
+
+  struct EncryptedData {
+    vector<unsigned char> bytes;
+    Nonce nonce;
+
+    EncryptedData(const vector<unsigned char> &bytes, const Nonce &nonce)
+        : bytes(bytes), nonce(nonce) {}
+  };
+
   bool didSodiumStart() {
     if (sodium_init() < 0) {
       return false;
@@ -104,8 +140,6 @@ public:
 
     return keyStringBase64;
   }
-
-  using EncryptionKey = std::array<unsigned char, crypto_secretbox_KEYBYTES>;
 
   static EncryptionKey
   getEncriptionKeyAsBytes(const string &base64EncodedString) {
@@ -135,6 +169,51 @@ public:
     }
 
     return key;
+  }
+
+  static EncryptedData encryptData(vector<unsigned char> &bytes,
+                                   const string &base64EncodedString) {
+    EncryptionKey key = getEncriptionKeyAsBytes(base64EncodedString);
+
+    Nonce nonce;
+
+    vector<unsigned char> encryptedBytes(bytes.size() +
+                                         crypto_secretbox_MACBYTES);
+
+    crypto_secretbox_easy(encryptedBytes.data(), bytes.data(), bytes.size(),
+                          nonce.data(), key.data());
+
+    EncryptedData data(encryptedBytes, nonce);
+
+    return data;
+  }
+
+  static vector<unsigned char> decryptData(const EncryptedData &encryptedData,
+                                           const string &base64EncodedString) {
+    EncryptionKey key = getEncriptionKeyAsBytes(base64EncodedString);
+
+    if (encryptedData.bytes.size() < crypto_secretbox_MACBYTES) {
+      // NOTE: Failed to decode string
+      // TODO: Must eventually make sure the application can remove this key log
+      // the user out and start over
+      throw runtime_error("Invalid encrypted data");
+    }
+
+    vector<unsigned char> decryptedBytes(encryptedData.bytes.size() -
+                                         crypto_secretbox_MACBYTES);
+
+    int result = crypto_secretbox_open_easy(
+        decryptedBytes.data(), encryptedData.bytes.data(),
+        encryptedData.bytes.size(), encryptedData.nonce.data(), key.data());
+
+    if (result != 0) {
+      // NOTE: Data is not the same size as what is to be expected
+      // TODO: Must eventually make sure the application can remove this key log
+      // the user out and start over
+      throw runtime_error("Failed to decrypt data");
+    }
+
+    return decryptedBytes;
   }
 };
 
