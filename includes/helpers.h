@@ -120,6 +120,18 @@ public:
     return true;
   }
 
+  static string
+  encryptedBytesToBase64String(const vector<unsigned char> &encryptedBytes) {
+    char base64Encoded[sodium_base64_ENCODED_LEN(
+        encryptedBytes.size(), sodium_base64_VARIANT_ORIGINAL)];
+
+    sodium_bin2base64(base64Encoded, sizeof base64Encoded,
+                      encryptedBytes.data(), encryptedBytes.size(),
+                      sodium_base64_VARIANT_ORIGINAL);
+
+    return base64Encoded;
+  }
+
   static string genEncryptionKeyAsBase64() {
     unsigned char key[crypto_secretbox_KEYBYTES];
 
@@ -136,9 +148,7 @@ public:
     sodium_bin2base64(base64EncodedKey, sizeof base64EncodedKey, key,
                       sizeof key, sodium_base64_VARIANT_ORIGINAL);
 
-    string keyStringBase64 = base64EncodedKey;
-
-    return keyStringBase64;
+    return base64EncodedKey;
   }
 
   static EncryptionKey
@@ -171,11 +181,13 @@ public:
     return key;
   }
 
-  static EncryptedData encryptData(vector<unsigned char> &bytes,
+  static EncryptedData encryptData(const vector<unsigned char> &bytes,
                                    const string &base64EncodedString) {
     EncryptionKey key = getEncriptionKeyAsBytes(base64EncodedString);
 
     Nonce nonce;
+
+    randombytes_buf(nonce.data(), nonce.size());
 
     vector<unsigned char> encryptedBytes(bytes.size() +
                                          crypto_secretbox_MACBYTES);
@@ -183,9 +195,7 @@ public:
     crypto_secretbox_easy(encryptedBytes.data(), bytes.data(), bytes.size(),
                           nonce.data(), key.data());
 
-    EncryptedData data(encryptedBytes, nonce);
-
-    return data;
+    return EncryptedData(encryptedBytes, nonce);
   }
 
   static vector<unsigned char> decryptData(const EncryptedData &encryptedData,
