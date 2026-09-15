@@ -19,6 +19,7 @@
 - [ ] More to come for sure
 
 ## Features
+- [ ] Clean up user data and how it is accessed throughout the application 
 - [ ] Create a more meaningful and robust `checkForExistingAccount()` method. `configManager.h`
 - [x] ***9/15*** Build local encryption/decryption methods to "safely" store passwords and other sensitive info `helpers.h`
 - [x] ***9/14*** Change all calls to method `updateConfig(...)` in `configManager.h` to instead call `writeToConfigFile()`. `configManager.h`

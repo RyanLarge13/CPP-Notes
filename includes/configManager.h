@@ -22,52 +22,67 @@ using json = nlohmann::json;
 class ConfigManager {
 private:
   struct User {
-    int userid;
-    int pin;
-    bool loggedIn;
-    bool hasSyncedServer;
+    int userid = 0;
+    int pin = 0;
+    string pinNonce;
+
+    bool loggedIn = false;
+    bool hasSyncedServer = false;
+
+    string encryptionKeyString;
     string token;
     string username;
     string email;
     string password;
-    string mainDir;
+    string passwordNonce;
+    string mainDir = "/cpp-notes";
 
-    User(int userid, int pin, bool loggedIn, bool hasSyncedServer,
+    User(const string &userIdString, const string &pinString,
+         const string &pinNonce, const string &loggedInString,
+         const string &hasSyncedServerString, const string &encryptionKeyString,
          const string &token, const string &username, const string &email,
-         const string &password, const string &mainDir)
-        : userid(userid), pin(pin), loggedIn(loggedIn),
-          hasSyncedServer(hasSyncedServer), token(token), username(username),
-          email(email), password(password), mainDir(mainDir) {}
+         const string &password, const string &passwordNonce,
+         const string &mainDir)
+        : userid(stoi(userIdString)), pin(stoi(pinString)), pinNonce(pinNonce),
+          loggedIn(loggedInString == "true"),
+          hasSyncedServer(hasSyncedServerString == "true"),
+          encryptionKeyString(encryptionKeyString), token(token),
+          username(username), email(email), password(password),
+          passwordNonce(passwordNonce), mainDir(mainDir) {}
   };
 
 public:
   // NOTE: Share this user instance with the app
-  inline static User globalUser =
-      User(1, 1234, false, false, "", "", "", "", "/cpp-notes");
+  inline static User globalUser;
 
-  vector<string> getUserInfo(bool rawData) {
+  void getUserInfo() {
     fstream *file =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
+
     if (!file) {
-      delete file;
-      return {};
+      // NOTE: Just kill the program. User config is clearly messed up??
+      throw runtime_error("Error reading config file");
     }
+
     string line;
     string value;
-    vector<string> rows;
+
+    unordered_map<string, string> user;
+
     while (getline(*file, value)) {
-      if (rawData) {
-        rows.push_back(value);
-      }
-      if (!rawData) {
-        size_t colonPosition = value.find(":");
-        if (colonPosition != string::npos) {
-          string lineValue = value.substr(colonPosition + 1);
-          string formattedLineValue = helpers.eraseWhiteSpace(lineValue);
-          rows.push_back(formattedLineValue);
-        }
+      size_t colonPosition = value.find(":");
+
+      if (colonPosition != string::npos) {
+        string key = value.substr(0, colonPosition);
+        string lineValue = value.substr(colonPosition + 1);
+
+        string formattedKeyValue = helpers.eraseWhiteSpace(key);
+        string formattedLineValue = helpers.eraseWhiteSpace(lineValue);
+
+        user[formattedKeyValue] = formattedLineValue;
       }
     }
+
     if (file->fail() && !file->eof()) {
       exceptionHandler.printInstructions(
           {{"Please reload the application and try again. We encountered "
@@ -77,13 +92,19 @@ public:
             "program"},
            {"2. Make sure you have permissions set correctly to your "
             "file"}});
+
       file->close();
       delete file;
-      return {};
+
+      throw runtime_error(
+          "Error reading the contents of your config file. Please check "
+          "permissions for this file and try to run the program again");
     }
+
+    globalUser = User();
+
     file->close();
     delete file;
-    return rows;
   }
 
 private:
@@ -678,6 +699,7 @@ public:
   // is not tampered with or messed up
   bool checkForExistingAccount() {
     bool confirmed = false;
+
     vector<string> rows = getUserInfo(false);
 
     if (rows.size() < 9) {
