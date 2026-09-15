@@ -105,8 +105,36 @@ public:
     return keyStringBase64;
   }
 
-  static unsigned char getExcriptionAsBytes(const string &base64EncodedString) {
-    sodium_base642bin();
+  using EncryptionKey = std::array<unsigned char, crypto_secretbox_KEYBYTES>;
+
+  static EncryptionKey
+  getEncriptionKeyAsBytes(const string &base64EncodedString) {
+    EncryptionKey key;
+
+    size_t decodedLen;
+
+    int result =
+        sodium_base642bin(key.data(), key.size(), base64EncodedString.c_str(),
+                          base64EncodedString.size(), nullptr, &decodedLen,
+                          nullptr, sodium_base64_VARIANT_ORIGINAL);
+
+    if (result != 0) {
+      // NOTE: Failed to decode string
+      // TODO: Must eventually make sure the application can remove this key log
+      // the user out and start over
+      throw runtime_error("Error transorming base64 encoded string into the "
+                          "raw encryption key");
+    }
+
+    if (decodedLen != crypto_secretbox_KEYBYTES) {
+      // NOTE: Data is not the same size as what is to be expected
+      // TODO: Must eventually make sure the application can remove this key log
+      // the user out and start over
+      throw runtime_error("Error checking to see if the key has the desired "
+                          "length as expected");
+    }
+
+    return key;
   }
 };
 
