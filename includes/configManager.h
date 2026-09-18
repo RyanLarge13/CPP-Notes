@@ -101,7 +101,11 @@ public:
           "permissions for this file and try to run the program again");
     }
 
-    globalUser = User();
+    globalUser =
+        User(user["userid"], user["pin"], user["pinNonce"], user["loggedIn"],
+             user["hasSyncedServer"], user["encryptionKeyString"],
+             user["token"], user["username"], user["email"], user["password"],
+             user["passwordNone"], user["mainDir"]);
 
     file->close();
     delete file;
@@ -742,8 +746,14 @@ public:
 
     createMainDir(mainDirName);
 
-    globalUser = User(userid, newPin, true, true, token, username, email, "",
-                      "/" + mainDirName);
+    // TODO: Here I can create the nonce for pin and password and encrypt them
+    // as well
+
+    User updatedUser = User(userid, newPin, true, true, token, username, email,
+                            "", "/" + mainDirName);
+
+    globalUser = updatedUser;
+
     writeToConfigFile();
   }
 
