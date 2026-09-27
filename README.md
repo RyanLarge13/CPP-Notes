@@ -200,6 +200,7 @@ You will currently need:
 - "libcurl"
 - "ncurses"
 - "libsodium-dev"
+- "nlohmann-json3-dev
 - "pkg-config"
 - A Linux or Unix-like development environment
 
@@ -208,7 +209,7 @@ Debian / Ubuntu
 Install the primary dependencies with:
 
 sudo apt update
-sudo apt install clang libcurl4-openssl-dev libncurses-dev pkg-config
+sudo apt install clang libcurl4-openssl-dev libncurses-dev pkg-config nlohmann-json3-dev
 
 ---
 
