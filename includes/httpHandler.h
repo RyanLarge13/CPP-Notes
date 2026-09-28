@@ -329,8 +329,11 @@ public:
     return res;
   }
 
-  ResponseObject getUserData(const string &token) {
-    string url = baseUrl + "/users/seperated/data";
+  ResponseObject getUserData(
+      // TODO: Configure curl to accept token. This will not work until done
+      // const string &token
+  ) {
+    string url = baseUrl + "/users/separated/data";
 
     ResponseObject res = callAPI(url, JsonData("", false), "GET");
 

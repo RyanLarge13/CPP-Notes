@@ -19,6 +19,7 @@
 - [ ] More to come for sure
 
 ## Features
+- [ ] Make sure tokens can be passed within the curl requests
 - [ ] Clean up user data and how it is accessed throughout the application 
 - [ ] Create a more meaningful and robust `checkForExistingAccount()` method. `configManager.h`
 - [x] ***9/15*** Build local encryption/decryption methods to "safely" store passwords and other sensitive info `helpers.h`

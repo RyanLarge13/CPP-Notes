@@ -53,7 +53,7 @@ private:
 
 public:
   // NOTE: Share this user instance with the app
-  inline static User globalUser;
+  inline static User globalUser();
 
   void getUserInfo() {
     fstream *file =
@@ -145,50 +145,9 @@ private:
   // USER LOGIN LOGOUT METHODS
   // -----------------------------------------------------------------------------
 
-  bool changeLogin(string state) {
-    if (state != "true" || state != "false") {
-      // Do not catch this error. Should stop application and trigger developer
-      // fix
-      throw runtime_error(
-          "Dev: pass a valid true or false string to changeLogin()");
-    }
-
-    vector<string> rows = getUserInfo(true);
-
-    if (rows.empty()) {
-      // Do not catch this. Allow dev to fix
-      throw runtime_error(
-          "Dev: getUserInfo is returning no data. Check method implementation "
-          "when calling getUserInfo from inside changeLogin()");
-    }
-
-    fstream *file =
-        fileManager.openFileReadWrite(fileManager.HOME_DIR + "config.yaml");
-
-    if (!file) {
-      // Do not catch this. Allow dev to fix
-      throw runtime_error("Dev: opening config.yaml file from inside "
-                          "changeLogin is failing. Check for proper routing");
-    }
-
-    rows[0] = "logged_in: " + state;
-
-    try {
-      for (const string &row : rows) {
-        *file << row << "\n";
-      }
-    } catch (const filesystem_error &err) {
-      exceptionHandler.printPlainError(
-          "There was a problem writing to your configuration file. Please "
-          "check to make sure you have the proper access rights to config.yaml "
-          "in your root dir at: " +
-          fileManager.HOME_DIR);
-      return false;
-    }
-
-    file->close();
-    delete file;
-    return true;
+  bool changeLogin(bool state) {
+    globalUser.loggedIn = state;
+    writeToConfigFile();
   }
 
   bool login() {
@@ -205,13 +164,10 @@ private:
       return login();
     }
 
-    vector<string> rows = getUserInfo(false);
-
-    // Check if the pin stored in users config matches
-    // Later implement robust security like encryotion and keys
-    if (stoi(rows[4]) == pin) {
+    // TODO: Check pin that is encrypted
+    if (globalUser.pin == pin) {
       system("clear");
-      bool loginSuccess = changeLogin("true");
+      bool loginSuccess = changeLogin(true);
 
       if (loginSuccess) {
         return true;
@@ -233,7 +189,7 @@ private:
         "Please provide a valid answer, Y for yes, n for no");
 
     if (helpers.inputStringIsYes(confirmLogout)) {
-      changeLogin("false");
+      changeLogin(false);
       return true;
     }
 

@@ -31,8 +31,8 @@ public:
   // USAGE: When a json object needs multiple key checks especially when data
   // comes from the server
   static bool containsAll(const vector<string> &strings, const json &data) {
-    for (int i = 0; i < strings.size(); i++) {
-      if (!data.contains(strings[i])) {
+    for (const string &str : strings) {
+      if (!data.contains(str)) {
         return false;
       }
     }
