@@ -117,29 +117,90 @@ private:
   // -----------------------------------------------------------------------------
 
   void confirmPass(const string &password) {
-    string confirmPassword = ioHandler.getInput<string>(
+    string confirmedPassword = ioHandler.getInput<string>(
         {{"Confirm your password"}},
         "Confirm Password: ", "Please input valid characters");
-    if (!validator.checkValidString(8, 20, {';'}, confirmPassword)) {
+
+    if (!validator.checkValidString(8, 20, {';'}, confirmedPassword) ||
+        confirmedPassword == password) {
       return;
     }
-    if (confirmPassword == password) {
-      return;
-    } else {
-      exceptionHandler.printPlainError(
-          "Please type in your password again exactly the same as the first "
-          "time");
-      return confirmPass(password);
-    }
+
+    exceptionHandler.printPlainError(
+        "Please type in your password again exactly the same as the first "
+        "time");
+
+    confirmPass(password);
   }
 
-  void confirmUsername(const string &username) {}
+  void confirmUsername(const string &username) {
+    string confirmedUsername = ioHandler.getInput<string>(
+        {{"Confirm your username"}},
+        "Confirm Username: ", "Please input valid characters");
 
-  void confirmPin(const int &pin) {}
+    if (!validator.checkValidString(3, 20, {';'}, confirmedUsername) ||
+        confirmedUsername == username) {
+      return;
+    }
 
-  void confirmEmail(const string &email) {}
+    exceptionHandler.printPlainError(
+        "Please type in your username again exactly the same as the first "
+        "time");
 
-  void confirmNewDirname(const string &newDirname) {}
+    confirmUsername(username);
+  }
+
+  void confirmPin(const int &pin) {
+    string confirmedPin = ioHandler.getInput<string>(
+        {{"Confirm your pin"}},
+        "Confirm Pin: ", "Please input valid characters");
+
+    if (!validator.checkValPin(pin, 1000, 9999, 4) || confirmedPin == pin) {
+      return;
+    }
+
+    exceptionHandler.printPlainError(
+        "Please type in your pin again exactly the same as the first "
+        "time");
+
+    confirmPin(pin);
+  }
+
+  void confirmEmail(const string &email) {
+    string confirmedEmail = ioHandler.getInput<string>(
+        {{"Confirm your email"}},
+        "Confirm Email: ", "Please input valid characters");
+
+    if (!validator.checkValidString(4, 50, {';', '<', '>', '?', '\\', '/'},
+                                    confirmedEmail) ||
+        confirmedEmail == email) {
+      return;
+    }
+
+    exceptionHandler.printPlainError(
+        "Please type in your email again exactly the same as the first "
+        "time");
+
+    confirmEmail(email);
+  }
+
+  void confirmNewDirname(const string &newDirname) {
+    string confirmedDirName = ioHandler.getInput<string>(
+        {{"Confirm your new Directory name"}},
+        "Confirm Directory Name: ", "Please input valid characters");
+
+    if (!validator.checkValidString(
+            3, 20, {';', '/', '\\', '\'', '<', '>', '?'}, confirmedDirName) ||
+        confirmedDirName == newDirName) {
+      return;
+    }
+
+    exceptionHandler.printPlainError("Please type in your directory name again "
+                                     "exactly the same as the first "
+                                     "time");
+
+    confirmNewDirName(newDirname);
+  }
 
   // -----------------------------------------------------------------------------
   // USER LOGIN LOGOUT METHODS
