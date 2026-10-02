@@ -37,6 +37,8 @@ private:
     string passwordNonce;
     string mainDir = "/cpp-notes";
 
+    User() = defualt;
+
     User(const string &userIdString, const string &pinString,
          const string &pinNonce, const string &loggedInString,
          const string &hasSyncedServerString, const string &encryptionKeyString,
@@ -52,15 +54,18 @@ private:
   };
 
 public:
-  // NOTE: Share this user instance with the app
-  inline static User globalUser();
+  // NOTE: Share this user instance with the app construct a default user
+  inline static User globalUser{};
 
+  // USAGE: Update the global runtime user instance with the latest saved user
+  // information from the stored configuration file
   void getUserInfo() {
     fstream *file =
         fileManager.openFileReadWrite(fileManager.HOME_DIR + "/config.yaml");
 
     if (!file) {
-      // NOTE: Just kill the program. User config is clearly messed up??
+      // NOTE: Just kill the program. User config is clearly messed up?? What
+      // did I do this time?
       throw runtime_error("Error reading config file");
     }
 
@@ -133,7 +138,7 @@ private:
     confirmPass(password);
   }
 
-  void confirmUsername(const string &username) {
+  bool confirmUsername(const string &username) {
     string confirmedUsername = ioHandler.getInput<string>(
         {{"Confirm your username"}},
         "Confirm Username: ", "Please input valid characters");
@@ -206,7 +211,7 @@ private:
   // USER LOGIN LOGOUT METHODS
   // -----------------------------------------------------------------------------
 
-  bool changeLogin(bool state) {
+  void changeLogin(bool state) {
     globalUser.loggedIn = state;
     writeToConfigFile();
   }
@@ -217,26 +222,18 @@ private:
         "Login with your pin: ", "Your pin will be a 4 digit number");
 
     if (!validator.checkValPin(pin, 1111, 9999, 4)) {
-      exceptionHandler.printPlainError("Please respond with a valid pin");
       exceptionHandler.printInstructions(
-          {{"- Must be 4 digits", "- No less than 1111",
-            "- No greater than 9999", "Please try again"}});
+          {{"Please respond with a valid pin \n", "- Must be 4 digits",
+            "- No less than 1111", "- No greater than 9999",
+            "Please try again"}});
 
       return login();
     }
 
-    // TODO: Check pin that is encrypted
     if (globalUser.pin == pin) {
       system("clear");
-      bool loginSuccess = changeLogin(true);
+      changeLogin(true);
 
-      if (loginSuccess) {
-        return true;
-      }
-
-      // In the future instead of erroring out and forcing a user into infinite
-      // login attempts because of fauled changeLogin() calls, send an error to
-      // the server for bug handling. For now just return true
       return true;
     }
 
@@ -264,65 +261,64 @@ private:
   string createUsername() {
     string username = ioHandler.getInput<string>(
         {{""}}, "Username: ", "Your username must be valid characters");
-    if (!validator.checkValidString(3, 20,
-                                    {'<', '>', ',', '{', '}', '[', ']', '!',
-                                     '@', '#', '$', '%', '^', '&', '*', '(',
-                                     ')', '+', '='},
-                                    username)) {
-      exceptionHandler.printPlainError("Please insert a valid username");
+
+    bool isValidUsername = validator.checkValidString(
+        3, 20,
+        {'<', '>', ',', '{', '}', '[', ']', '!', '@', '#', '$', '%', '^', '&',
+         '*', '(', ')', '+', '='},
+        username);
+
+    if (!isValidUsername) {
       exceptionHandler.printInstructions(
-          {{"- Can ONLY contain:", "  - letters", "  - numbers",
-            "  - underscores", "  - and dashes",
+          {{"Please insert a valid username \n", "- Can ONLY contain:",
+            "  - letters", "  - numbers", "  - underscores", "  - and dashes",
             "- Must be at least 3 characters long",
             "- Cannot be longer than 20 characters\n"}});
       return createUsername();
     }
-    string confirm = ioHandler.getInput<string>(
-        {{"Confirm " + RED + username + ENDCOLOR +
-          " is the username you want"}},
-        YELLOW + "(Y/n): " + ENDCOLOR,
-        "Please give a valid answer, Y for yes n for no");
-    if (helpers.inputStringIsYes(confirm)) {
+
+    bool confirmed = confirmUsername(username);
+
+    if (helpers.inputStringIsYes(confirmed)) {
       return username;
-    } else {
-      cout << endl
-           << BLUE + "Please try again, or press Ctrl + c to exit the program" +
-                  ENDCOLOR
-           << endl;
-      return createUsername();
     }
-    return username;
+
+    exceptionHandler.printPlainError(
+        BLUE + "Please try again, or press Ctrl + c to exit the program" +
+        ENDCOLOR);
+
+    return createUsername();
   };
 
   string createEmail() {
     string email = ioHandler.getInput<string>(
         {{""}}, "New Email: ", "Please provide a valid email address");
-    if (!validator.checkValidString(
-            6, 50,
-            {{'<', '>', ',', '{', '}', '[', ']', '!', '#', '$', '%', '^', '&',
-              '*', '(', ')', '+', '='}},
-            email)) {
-      exceptionHandler.printPlainError("Please provide a valid email");
+
+    bool emailIsValid = validator.checkValidString(
+        6, 50,
+        {{'<', '>', ',', '{', '}', '[', ']', '!', '#', '$', '%', '^', '&', '*',
+          '(', ')', '+', '='}},
+        email);
+
+    if (!emailIsValid) {
       exceptionHandler.printInstructions(
-          {{"- Must be at least 6 characters",
+          {{"Please provide a valid email", "- Must be at least 6 characters",
             "- Cannot be longer than 50 characters",
             "- Cannot contain these special characters:",
             "'<', '>', ',', '.', '{', '}', '[', ']', '! , '#', '$', '%', '^', "
             "'&', '*', '(', ')', '+','='"}});
-      return createEmail();
-    }
-    string confirm = ioHandler.getInput<string>(
-        {{"Confirm " + RED + email + ENDCOLOR + " is the email you want"}},
-        YELLOW + "(Y/n): " + ENDCOLOR,
-        "Please give a valid answer, Y for yes, n for no");
 
-    if (helpers.inputStringIsYes(confirm)) {
-      return email;
-    } else {
-      cout << endl << BLUE + "Okay, try again" + ENDCOLOR << endl;
-      return createEmail();
+      return createEmail(email);
     }
-    return email;
+
+    bool confirmed = confirmEmail(email);
+
+    if (helpers.inputStringIsYes(confirmed)) {
+      return email;
+    }
+
+    exceptionHandler.printPlainError("Please confirm with Y or y");
+    return createEmail();
   }
 
   string createPassword() {
@@ -333,12 +329,16 @@ private:
          {"- numbers"},
          {"- and special characters\n"}},
         "New Password: ", "Please create a valid password");
-    if (!validator.checkValidString(8, 50, {';'}, password)) {
+
+    bool isValidPassword = validator.checkValidString(8, 50, {';'}, password);
+
+    if (!isValidPassword) {
       system("clear");
       exceptionHandler.printPlainError(
           "Please input a valid password, quit the program with Ctrl + c");
       return createPassword();
     }
+
     confirmPass(password);
     return password;
   };
@@ -346,28 +346,26 @@ private:
   int createPin() {
     int pin = ioHandler.getInput<int>(
         {{""}}, "New 4-digit pin: ", "Your new pin must be a 4-digit number");
-    if (!validator.checkValPin(pin, 1111, 9999, 4)) {
-      exceptionHandler.printPlainError("Please input a valid pin");
+
+    bool pinIsValid = validator.checkValPin(pin, 1111, 9999, 4);
+
+    if (!pinIsValid) {
       exceptionHandler.printInstructions(
-          {{"- Must be 4 digits", "- Cannot be less then 1111",
-            "- Cannot be greater than 9999",
+          {{"Please input a valid pin", "- Must be 4 digits",
+            "- Cannot be less then 1111", "- Cannot be greater than 9999",
             "Please try again. If you want to exit press Ctrl + c to quit "
             "at anytime"}});
       return createPin();
     }
-    string confirm = ioHandler.getInput<string>(
-        {{"Confirm " + RED + to_string(pin) + ENDCOLOR +
-          " is what you want your new pin to be"}},
-        YELLOW + "(Y/n): " + ENDCOLOR,
-        "Please provide a valid response, Y for yes, n for no");
-    if (helpers.inputStringIsYes(confirm)) {
+
+    bool confirmed = confirmPin(pin);
+
+    if (helpers.inputStringIsYes(confirmed)) {
       return pin;
-    } else {
-      system("clear");
-      cout << BLUE + "Okay, try again" + ENDCOLOR << endl;
-      return createPin();
     }
-    return pin;
+
+    system("clear");
+    exceptionHandler.printPlainError("") return createPin();
   };
 
   string createCustomDirName() {

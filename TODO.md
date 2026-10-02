@@ -19,6 +19,7 @@
 - [ ] More to come for sure
 
 ## Features
+- [ ] Update confirmation methods to be more specific to each input. Like for example, username does not need to be retyped to confirm
 - [ ] Make sure tokens can be passed within the curl requests
 - [ ] Clean up user data and how it is accessed throughout the application 
 - [ ] Create a more meaningful and robust `checkForExistingAccount()` method. `configManager.h`
