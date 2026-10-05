@@ -121,7 +121,7 @@ private:
   // USER INPUT CONFIRMATIONS
   // -----------------------------------------------------------------------------
 
-  void confirmPass(const string &password) {
+  bool confirmPass(const string &password) {
     string confirmedPassword = ioHandler.getInput<string>(
         {{"Confirm your password"}},
         "Confirm Password: ", "Please input valid characters");
@@ -143,24 +143,26 @@ private:
         {{"Confirm your username"}},
         "Confirm Username: ", "Please input valid characters");
 
-    if (!validator.checkValidString(3, 20, {';'}, confirmedUsername) ||
-        confirmedUsername == username) {
-      return;
+    bool usernameIsValid =
+        validator.checkValidString(3, 20, {';'}, confirmedUsername);
+
+    if (!usernameIsValid || confirmedUsername == username) {
+      return false;
     }
 
     exceptionHandler.printPlainError(
         "Please type in your username again exactly the same as the first "
         "time");
 
-    confirmUsername(username);
+    return confirmUsername(username);
   }
 
-  void confirmPin(const int &pin) {
+  bool confirmPin(const int &pin) {
     string confirmedPin = ioHandler.getInput<string>(
         {{"Confirm your pin"}},
         "Confirm Pin: ", "Please input valid characters");
 
-    if (!validator.checkValPin(pin, 1000, 9999, 4) || confirmedPin == pin) {
+    if (!validator.checkValPin(pin, 1111, 9999, 4) || confirmedPin == pin) {
       return;
     }
 
@@ -171,7 +173,7 @@ private:
     confirmPin(pin);
   }
 
-  void confirmEmail(const string &email) {
+  bool confirmEmail(const string &email) {
     string confirmedEmail = ioHandler.getInput<string>(
         {{"Confirm your email"}},
         "Confirm Email: ", "Please input valid characters");
@@ -189,7 +191,7 @@ private:
     confirmEmail(email);
   }
 
-  void confirmNewDirname(const string &newDirname) {
+  bool confirmNewDirname(const string &newDirname) {
     string confirmedDirName = ioHandler.getInput<string>(
         {{"Confirm your new Directory name"}},
         "Confirm Directory Name: ", "Please input valid characters");
@@ -221,7 +223,9 @@ private:
         {{YELLOW + "You are logged out" + ENDCOLOR}},
         "Login with your pin: ", "Your pin will be a 4 digit number");
 
-    if (!validator.checkValPin(pin, 1111, 9999, 4)) {
+    bool pinIsValid = validator.checkValPin(pin, 1111, 9999, 4);
+
+    if (!pinIsValid) {
       exceptionHandler.printInstructions(
           {{"Please respond with a valid pin \n", "- Must be 4 digits",
             "- No less than 1111", "- No greater than 9999",
