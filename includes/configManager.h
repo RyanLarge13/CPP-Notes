@@ -126,16 +126,15 @@ private:
         {{"Confirm your password"}},
         "Confirm Password: ", "Please input valid characters");
 
-    if (!validator.checkValidString(8, 20, {';'}, confirmedPassword) ||
-        confirmedPassword == password) {
-      return;
+    if (confirmedPassword == password) {
+      return true;
     }
 
     exceptionHandler.printPlainError(
         "Please type in your password again exactly the same as the first "
         "time");
 
-    confirmPass(password);
+    return confirmPass(password);
   }
 
   bool confirmUsername(const string &username) {
@@ -163,14 +162,14 @@ private:
         "Confirm Pin: ", "Please input valid characters");
 
     if (!validator.checkValPin(pin, 1111, 9999, 4) || confirmedPin == pin) {
-      return;
+      return false;
     }
 
     exceptionHandler.printPlainError(
         "Please type in your pin again exactly the same as the first "
         "time");
 
-    confirmPin(pin);
+    return confirmPin(pin);
   }
 
   bool confirmEmail(const string &email) {
@@ -181,14 +180,14 @@ private:
     if (!validator.checkValidString(4, 50, {';', '<', '>', '?', '\\', '/'},
                                     confirmedEmail) ||
         confirmedEmail == email) {
-      return;
+      return false;
     }
 
     exceptionHandler.printPlainError(
         "Please type in your email again exactly the same as the first "
         "time");
 
-    confirmEmail(email);
+    return confirmEmail(email);
   }
 
   bool confirmNewDirname(const string &newDirname) {
@@ -199,14 +198,14 @@ private:
     if (!validator.checkValidString(
             3, 20, {';', '/', '\\', '\'', '<', '>', '?'}, confirmedDirName) ||
         confirmedDirName == newDirName) {
-      return;
+      return false;
     }
 
     exceptionHandler.printPlainError("Please type in your directory name again "
                                      "exactly the same as the first "
                                      "time");
 
-    confirmNewDirName(newDirname);
+    return confirmNewDirName(newDirname);
   }
 
   // -----------------------------------------------------------------------------
